@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Data, model, training, evaluation, inference, loss, metric, visualization,
   and experiment-management frameworks.
+- Official `mamba-ssm` Mamba backend with configurable state, convolution, and
+  expansion settings, plus backend identity in checkpoints and reports.
 
 ### Changed
 
@@ -19,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Tensor batch collation now integrates with the training engine; a CPU
   end-to-end restoration smoke test covers training, checkpointing, inference,
   and evaluation.
+- The former Mamba-inspired recurrence is now clearly named
+  `LightweightStateSpaceBlock` and is only selected explicitly for compatibility
+  and CPU smoke tests.
 
 ## [0.1.0] - 2026-07-23
 

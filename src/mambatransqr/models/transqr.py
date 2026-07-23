@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 from torch import Tensor, nn
 
 from mambatransqr.models.decoder import Decoder
 from mambatransqr.models.encoder import Encoder
 from mambatransqr.models.layers import initialize_weights
+from mambatransqr.models.mamba_block import mamba_ssm_version
 
 
 @dataclass(frozen=True, slots=True)
@@ -28,6 +30,7 @@ class ModelConfig:
         drop_path_rate: Maximum stochastic-depth probability.
         positional_encoding: ``learnable`` or ``sinusoidal``.
         activation: Activation function name.
+        mamba_backend: ``mamba_ssm`` (official) or ``lightweight`` compatibility backend.
     """
 
     image_size: int | tuple[int, int] = 256
@@ -42,6 +45,31 @@ class ModelConfig:
     drop_path_rate: float = 0.1
     positional_encoding: str = "learnable"
     activation: str = "gelu"
+    mamba_backend: Literal["mamba_ssm", "lightweight"] = "mamba_ssm"
+    mamba_d_state: int = 16
+    mamba_d_conv: int = 4
+    mamba_expand: int = 2
+
+    def __post_init__(self) -> None:
+        """Validate Mamba backend settings before model construction."""
+        if self.mamba_backend not in {"mamba_ssm", "lightweight"}:
+            raise ValueError("mamba_backend must be 'mamba_ssm' or 'lightweight'")
+        if min(self.mamba_d_state, self.mamba_d_conv, self.mamba_expand) < 1:
+            raise ValueError("Mamba dimensions must be positive")
+
+    def architecture_identity(self) -> dict[str, str | None]:
+        """Return backend metadata suitable for reports and checkpoints."""
+        return {
+            "mamba_backend": self.mamba_backend,
+            "mamba_implementation": (
+                "official_mamba_ssm"
+                if self.mamba_backend == "mamba_ssm"
+                else "lightweight_state_space"
+            ),
+            "mamba_ssm_version": (
+                mamba_ssm_version() if self.mamba_backend == "mamba_ssm" else None
+            ),
+        }
 
 
 class MambaTransQR(nn.Module):
@@ -63,6 +91,10 @@ class MambaTransQR(nn.Module):
             depth=self.config.depth,
             num_heads=self.config.num_heads,
             mlp_ratio=self.config.mlp_ratio,
+            mamba_backend=self.config.mamba_backend,
+            mamba_d_state=self.config.mamba_d_state,
+            mamba_d_conv=self.config.mamba_d_conv,
+            mamba_expand=self.config.mamba_expand,
             dropout=self.config.dropout,
             drop_path_rate=self.config.drop_path_rate,
             positional_encoding=self.config.positional_encoding,
@@ -75,7 +107,23 @@ class MambaTransQR(nn.Module):
             out_channels=self.config.out_channels,
             dropout=self.config.dropout,
         )
-        self.apply(initialize_weights)
+        self._initialize_weights()
+
+    def _initialize_weights(self) -> None:
+        """Initialize project layers without overwriting official Mamba defaults."""
+        official_mamba_modules = {
+            id(child)
+            for block in self.encoder.blocks
+            if block.mamba.backend == "mamba_ssm"
+            for child in block.mamba.implementation.modules()
+        }
+        for module in self.modules():
+            if id(module) not in official_mamba_modules:
+                initialize_weights(module)
+
+    def architecture_identity(self) -> dict[str, str | None]:
+        """Return the exact Mamba implementation identity used by this model."""
+        return self.config.architecture_identity()
 
     def forward(self, images: Tensor) -> Tensor:
         """Reconstruct clean QR images from input images.

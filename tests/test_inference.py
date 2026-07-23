@@ -42,6 +42,7 @@ def test_predictor_runs_single_image_on_cpu() -> None:
         num_heads=2,
         mlp_ratio=2.0,
         dropout=0.0,
+        mamba_backend="lightweight",
     )
     restored, result = Predictor(
         config=config, device="cpu", mixed_precision=False

@@ -67,8 +67,17 @@ def test_reports_are_written(tmp_path: Path) -> None:
     ).is_file()
     assert ReportGenerator.benchmark_csv(metrics, tmp_path / "benchmark.csv").is_file()
     assert ReportGenerator.summary_markdown(
-        metrics, metrics, tmp_path / "summary.md"
+        metrics,
+        metrics,
+        tmp_path / "summary.md",
+        architecture={
+            "mamba_backend": "lightweight",
+            "mamba_implementation": "lightweight_state_space",
+            "mamba_ssm_version": None,
+        },
     ).is_file()
+    payload = __import__("json").loads((tmp_path / "evaluation.json").read_text())
+    assert set(("mamba_backend", "mamba_implementation", "mamba_ssm_version")) <= set(payload)
 
 
 def test_statistics_summary_has_expected_mean() -> None:

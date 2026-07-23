@@ -1,4 +1,10 @@
 # Mamba-TransQR training configuration.
+model:
+  mamba_backend: mamba_ssm
+  mamba_d_state: 16
+  mamba_d_conv: 4
+  mamba_expand: 2
+
 trainer:
   epochs: 100
   device: auto

@@ -20,6 +20,7 @@ from mambatransqr.training import (  # noqa: E402
     TrainerConfig,
     TrainingState,
 )
+from mambatransqr.models import ModelConfig, build_model  # noqa: E402
 
 
 def _batches() -> list[dict[str, object]]:
@@ -95,6 +96,26 @@ def test_checkpoint_manager_restores_state(tmp_path: Path) -> None:
     restored, _ = manager.load(manager.latest_path, model, optimizer)
     assert restored.epoch == 3
     assert manager.best_path.is_file()
+
+
+def test_checkpoint_records_mamba_architecture_identity(tmp_path: Path) -> None:
+    """Mamba checkpoints retain enough identity to trace experimental results."""
+    config = ModelConfig(
+        image_size=16,
+        patch_size=8,
+        embed_dim=8,
+        depth=1,
+        num_heads=2,
+        mamba_backend="lightweight",
+    )
+    with pytest.warns(UserWarning):
+        model = build_model(config)
+    optimizer = OptimizerFactory.create(model.parameters())
+    manager = CheckpointManager(tmp_path)
+    manager.save(model, optimizer, TrainingState())
+    payload = torch.load(manager.latest_path, weights_only=False)
+    assert payload["architecture"] == config.architecture_identity()
+    assert payload["mamba_backend"] == "lightweight"
 
 
 def test_trainer_saves_latest_and_best_checkpoints(tmp_path: Path) -> None:

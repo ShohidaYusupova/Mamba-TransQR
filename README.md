@@ -20,7 +20,9 @@ python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 ```
 
-For a standard runtime install use `python -m pip install -e .`. Full setup
+For a standard runtime install use `python -m pip install -e .`. Production
+models default to the official `mamba-ssm` backend; install it with
+`python -m pip install -e ".[mamba]"` on its supported platform. Full setup
 instructions are in [docs/installation.md](docs/installation.md).
 
 ## Quick start
@@ -152,9 +154,12 @@ See [docs/inference.md](docs/inference.md) for the full inference guide.
 
 ## Architecture
 
-The model combines Mamba-inspired selective state-space mixing with Transformer
-self-attention in hybrid fusion blocks. A patch-token encoder and image decoder
-make the design suitable for image-to-image QR restoration. See
+The production model combines the official Mamba selective SSM (`mamba_ssm`)
+with Transformer self-attention in hybrid fusion blocks. A distinctly named
+`LightweightStateSpaceBlock` remains available only as a non-official,
+Mamba-inspired compatibility backend for CPU smoke tests. Checkpoints and
+reports record `mamba_backend`, `mamba_implementation`, and
+`mamba_ssm_version`. See
 [docs/architecture.md](docs/architecture.md) for details.
 
 ## Project layout

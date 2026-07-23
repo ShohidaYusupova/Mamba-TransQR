@@ -29,12 +29,14 @@ metrics = ["lpips>=0.1.4", "psutil>=5.9"]
 qr-decode = ["pyzbar>=0.1.9", "zxing-cpp>=2.2"]
 logging = ["tensorboard>=2.14"]
 export = ["onnx>=1.16", "onnxruntime>=1.18"]
+mamba = ["mamba-ssm>=2.2"]
 all = [
   "black>=24.10",
   "mypy>=1.13",
   "onnx>=1.16",
   "onnxruntime>=1.18",
   "lpips>=0.1.4",
+  "mamba-ssm>=2.2",
   "psutil>=5.9",
   "pytest>=8.3",
   "pytest-cov>=6.0",

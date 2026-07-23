@@ -5,6 +5,10 @@ model:
   embed_dim: 256
   depth: 8
   num_heads: 8
+  mamba_backend: mamba_ssm
+  mamba_d_state: 16
+  mamba_d_conv: 4
+  mamba_expand: 2
 
 inference:
   checkpoint: checkpoints/best.pt

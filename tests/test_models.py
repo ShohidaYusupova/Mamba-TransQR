@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 import pytest
 
 torch = pytest.importorskip("torch")
@@ -31,6 +33,7 @@ def config() -> ModelConfig:
         mlp_ratio=2.0,
         dropout=0.0,
         drop_path_rate=0.1,
+        mamba_backend="lightweight",
     )
 
 
@@ -56,10 +59,72 @@ def test_positional_encoding_preserves_token_shape(
     assert encoding(tokens).shape == tokens.shape
 
 
-def test_mamba_block_has_residual_shape() -> None:
+def test_lightweight_mamba_block_preserves_shape_and_backward() -> None:
     """Mamba block preserves batch, sequence, and embedding dimensions."""
-    block = MambaBlock(embed_dim=16, expansion=2.0, dropout=0.0)
+    with pytest.warns(UserWarning, match="not the official Mamba"):
+        block = MambaBlock(embed_dim=16, backend="lightweight", dropout=0.0)
+    inputs = torch.randn(2, 9, 16, requires_grad=True)
+    output = block(inputs)
+    output.square().mean().backward()
+    assert output.shape == inputs.shape
+    assert inputs.grad is not None
+
+
+def test_invalid_mamba_backend_is_rejected() -> None:
+    """Backend selection is explicit and validated before construction."""
+    with pytest.raises(ValueError, match="backend"):
+        MambaBlock(embed_dim=16, backend="unknown")  # type: ignore[arg-type]
+
+
+def test_official_backend_missing_dependency_does_not_fallback(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """An unavailable official backend must fail instead of changing architecture."""
+    import builtins
+
+    from mambatransqr.models import OptionalDependencyError
+
+    original_import = builtins.__import__
+
+    def reject_mamba(name: str, *args: Any, **kwargs: Any) -> Any:
+        if name.startswith("mamba_ssm"):
+            raise ImportError("simulated missing mamba-ssm")
+        return original_import(name, *args, **kwargs)
+
+    monkeypatch.setattr(builtins, "__import__", reject_mamba)
+    with pytest.raises(OptionalDependencyError, match="No lightweight fallback"):
+        MambaBlock(embed_dim=16, backend="mamba_ssm")
+
+
+def test_official_backend_forward_when_installed() -> None:
+    """Official Mamba preserves token shape when the optional package is installed."""
+    pytest.importorskip("mamba_ssm")
+    block = MambaBlock(embed_dim=16, backend="mamba_ssm", dropout=0.0)
     assert block(torch.randn(2, 9, 16)).shape == (2, 9, 16)
+
+
+def test_model_builder_propagates_mamba_settings() -> None:
+    """All model Mamba settings reach each encoder fusion block."""
+    config = ModelConfig(
+        image_size=16,
+        patch_size=8,
+        embed_dim=8,
+        depth=2,
+        num_heads=2,
+        mamba_backend="lightweight",
+        mamba_d_state=9,
+        mamba_d_conv=3,
+        mamba_expand=4,
+    )
+    with pytest.warns(UserWarning, match="not the official Mamba"):
+        model = build_model(config)
+    for block in model.encoder.blocks:
+        assert block.mamba.backend == "lightweight"
+        assert (block.mamba.d_state, block.mamba.d_conv, block.mamba.expand) == (
+            9,
+            3,
+            4,
+        )
 
 
 def test_transformer_block_has_residual_shape() -> None:

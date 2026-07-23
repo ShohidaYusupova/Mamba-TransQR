@@ -5,10 +5,18 @@ decoder.
 
 ```text
 Image → PatchEmbedding → PositionalEncoding → HybridFusionBlock × depth → Decoder → Restored image
-                                             ├─ MambaBlock: local convolution + selective state
+                                             ├─ MambaBlock: official mamba-ssm selective SSM
                                              └─ TransformerBlock: global multi-head attention
 ```
 
-Each hybrid block uses LayerNorm, residual paths, configurable activations,
-dropout, and stochastic depth. `ModelConfig` controls image/patch sizes,
-embedding width, depth, heads, MLP ratio, and regularization.
+`MambaBlock` uses `mamba_backend="mamba_ssm"` by default. This wraps the
+official `mamba_ssm.modules.mamba_simple.Mamba` module with pre-normalization,
+dropout, DropPath, and a residual connection, mapping `embed_dim` to `d_model`.
+`mamba_d_state`, `mamba_d_conv`, and `mamba_expand` configure the official
+layer.
+
+`mamba_backend="lightweight"` uses `LightweightStateSpaceBlock`, the legacy
+self-contained recurrence. It is not the official Mamba selective SSM and
+emits a warning; use it only where an explicit CPU-compatible smoke backend is
+needed. Every checkpoint and report records `mamba_backend`,
+`mamba_implementation`, and `mamba_ssm_version` for traceability.

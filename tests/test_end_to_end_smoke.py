@@ -63,6 +63,7 @@ def test_cpu_restoration_workflow_smoke(tmp_path: Path) -> None:
         mlp_ratio=2.0,
         dropout=0.0,
         drop_path_rate=0.0,
+        mamba_backend="lightweight",
     )
     model = build_model(config)
     optimizer = OptimizerFactory.create(model.parameters())

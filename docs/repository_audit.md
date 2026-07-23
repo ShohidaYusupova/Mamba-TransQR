@@ -30,7 +30,7 @@ The highest-priority data/training integration finding has been resolved:
 - Optional dependencies are grouped in `pyproject.toml` and missing ONNX,
   torchvision, and psutil capabilities now raise clear errors or warnings.
 
-Remaining gaps include official Mamba SSM fidelity, DDP/distributed support,
+Remaining gaps include DDP/distributed support,
 real QR fixtures and benchmark datasets, and execution of the full quality
 suite in a Python environment with PyTorch and development dependencies.
 
@@ -122,17 +122,13 @@ metrics package and one reporting/logger abstraction.
 
 ## Mamba model assessment
 
-`models/mamba_block.py` is **not an implementation of the official Mamba
-architecture or a wrapper around `mamba-ssm`**. It is an explicitly
-Mamba-inspired custom block: LayerNorm, linear input projection, depthwise
-1-D convolution, input-dependent sigmoid decay, and a Python loop that updates
-a recurrent state per token.
-
-It is a real executable neural block once PyTorch is installed, but it lacks
-the selective-scan kernel, parameterization, numerical behavior, and
-performance characteristics of the published Mamba SSM. The Python token loop
-will also be a material performance bottleneck for long sequences. Claims,
-benchmarks, and naming should reflect this distinction.
+`MambaBlock` now has explicit `mamba_ssm` and `lightweight` backends. The
+production default wraps the official `mamba-ssm` Mamba module and fails clearly
+when that optional dependency is unavailable; it never silently changes the
+architecture. The former custom recurrence is retained as
+`LightweightStateSpaceBlock`, warns on use, and is not presented as official
+Mamba. CPU smoke tests select it explicitly. Backend/version identity is saved
+in checkpoints and report artifacts.
 
 ## Pipeline assessment
 
@@ -197,9 +193,8 @@ Conclusion: evaluation is **partially implemented and unverified**.
 
 ## Modules still incomplete or needing production work
 
-1. **Model fidelity/performance** — replace or clearly separate the custom
-   Mamba-inspired recurrence from official Mamba SSM support; add performance
-   benchmarks and numerical tests.
+1. **Model performance** — add benchmark coverage for official Mamba SSM on
+   supported accelerator environments.
 2. **Data-to-training integration** — return stacked tensors from a training
    collator, add paired-data contracts, and test a full training step.
 3. **Distributed training** — add DDP, distributed sampling, rank-safe logging,

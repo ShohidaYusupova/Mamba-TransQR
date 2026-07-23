@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
+from typing import Literal
 
 from torch import Tensor, nn
 
@@ -40,6 +41,10 @@ class Encoder(nn.Module):
         depth: int,
         num_heads: int,
         mlp_ratio: float,
+        mamba_backend: Literal["mamba_ssm", "lightweight"],
+        mamba_d_state: int,
+        mamba_d_conv: int,
+        mamba_expand: int,
         dropout: float,
         drop_path_rate: float,
         positional_encoding: str,
@@ -76,6 +81,10 @@ class Encoder(nn.Module):
                 embed_dim,
                 num_heads,
                 mlp_ratio=mlp_ratio,
+                mamba_backend=mamba_backend,
+                mamba_d_state=mamba_d_state,
+                mamba_d_conv=mamba_d_conv,
+                mamba_expand=mamba_expand,
                 dropout=dropout,
                 drop_path=rate,
                 activation=activation,

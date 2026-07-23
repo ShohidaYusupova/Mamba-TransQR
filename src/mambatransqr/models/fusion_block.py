@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Literal
+
 import torch
 from torch import Tensor, nn
 
@@ -27,6 +29,10 @@ class HybridFusionBlock(nn.Module):
         embed_dim: int,
         num_heads: int,
         mlp_ratio: float = 4.0,
+        mamba_backend: Literal["mamba_ssm", "lightweight"] = "mamba_ssm",
+        mamba_d_state: int = 16,
+        mamba_d_conv: int = 4,
+        mamba_expand: int = 2,
         dropout: float = 0.0,
         drop_path: float = 0.0,
         activation: str = "gelu",
@@ -35,7 +41,10 @@ class HybridFusionBlock(nn.Module):
         super().__init__()
         self.mamba = MambaBlock(
             embed_dim,
-            expansion=mlp_ratio / 2.0,
+            backend=mamba_backend,
+            d_state=mamba_d_state,
+            d_conv=mamba_d_conv,
+            expand=mamba_expand,
             dropout=dropout,
             drop_path=drop_path,
             activation=activation,

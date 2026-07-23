@@ -65,12 +65,15 @@ class CheckpointManager:
         is_best: bool = False,
     ) -> None:
         """Persist latest state and optionally update the best checkpoint."""
+        architecture = _architecture_identity(model)
         payload: dict[str, Any] = {
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
             "state": state.to_dict(),
             "scheduler": scheduler.state_dict() if scheduler is not None else None,
             "ema": ema_state,
+            "architecture": architecture,
+            **architecture,
         }
         self._atomic_save(payload, self.latest_path)
         if is_best:
@@ -113,3 +116,21 @@ class CheckpointManager:
         temporary_path = path.with_suffix(".tmp")
         torch.save(payload, temporary_path)
         temporary_path.replace(path)
+
+
+def _architecture_identity(model: nn.Module) -> dict[str, str | None]:
+    """Extract backend traceability metadata without constraining generic models."""
+    identity = getattr(model, "architecture_identity", None)
+    if callable(identity):
+        value = identity()
+        if isinstance(value, dict):
+            return {
+                "mamba_backend": value.get("mamba_backend"),
+                "mamba_implementation": value.get("mamba_implementation"),
+                "mamba_ssm_version": value.get("mamba_ssm_version"),
+            }
+    return {
+        "mamba_backend": None,
+        "mamba_implementation": None,
+        "mamba_ssm_version": None,
+    }
