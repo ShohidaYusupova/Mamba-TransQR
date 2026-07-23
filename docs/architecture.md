@@ -24,3 +24,8 @@ needed. Every checkpoint and report records `mamba_backend`,
 Synthetic QR training data is generated from an explicit QR module grid. The
 dataset builder applies module-aware degradations at mild, moderate, or severe
 levels and preserves paired clean targets plus per-sample provenance.
+
+The QR training objective weights finder, alignment, timing, quiet-zone, and
+module-boundary regions. Its decode-consistency term is a differentiable
+binarization/contrast surrogate and never claims differentiation through ZBar
+or ZXing.

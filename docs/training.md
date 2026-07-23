@@ -22,6 +22,11 @@ trainer.fit(train_loader, validation_loader)
 
 See `configs/training.yaml` for all training options.
 
+`train_qr_restoration.yaml` defines the QR-specific weighted objective:
+reconstruction, SSIM, edges, structural regions, and a differentiable decoding
+surrogate. It does not differentiate through ZBar or ZXing. Recipe metadata
+captures seeds, hashes, backend identity, dependencies, Git, and hardware.
+
 ## Synthetic QR pairs
 
 Generate reproducible clean/damaged QR pairs with

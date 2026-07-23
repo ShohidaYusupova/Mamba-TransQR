@@ -13,6 +13,8 @@ from mambatransqr.training.optimizer import OptimizerConfig, OptimizerFactory
 from mambatransqr.training.scheduler import SchedulerConfig, SchedulerFactory
 from mambatransqr.training.state import TrainingState
 from mambatransqr.training.trainer import Trainer, TrainerConfig
+from mambatransqr.training.qr_trainer import QRRestorationTrainer
+from mambatransqr.training.recipes import reproducibility_metadata
 
 __all__ = [
     "AMPManager",
@@ -25,6 +27,7 @@ __all__ = [
     "LossManager",
     "OptimizerConfig",
     "OptimizerFactory",
+    "QRRestorationTrainer",
     "SchedulerConfig",
     "SchedulerFactory",
     "TensorBoardLogger",
@@ -34,4 +37,5 @@ __all__ = [
     "TrainingHistory",
     "TrainingLogger",
     "TrainingState",
+    "reproducibility_metadata",
 ]

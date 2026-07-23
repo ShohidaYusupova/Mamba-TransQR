@@ -62,6 +62,7 @@ class CheckpointManager:
         *,
         scheduler: Stateful | None = None,
         ema_state: dict[str, object] | None = None,
+        reproducibility: dict[str, Any] | None = None,
         is_best: bool = False,
     ) -> None:
         """Persist latest state and optionally update the best checkpoint."""
@@ -74,6 +75,7 @@ class CheckpointManager:
             "ema": ema_state,
             "architecture": architecture,
             **architecture,
+            "reproducibility": reproducibility or {},
         }
         self._atomic_save(payload, self.latest_path)
         if is_best:

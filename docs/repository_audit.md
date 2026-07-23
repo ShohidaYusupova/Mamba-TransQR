@@ -34,6 +34,10 @@ Remaining gaps include DDP/distributed support,
 real QR fixtures and benchmark datasets, and execution of the full quality
 suite in a Python environment with PyTorch and development dependencies.
 
+QR restoration training now includes a metadata-aware structural objective and
+reproducibility recipe; external QR decoder calls remain evaluation-only and
+are not used as differentiable losses.
+
 The full CPU quality suite was subsequently executed in a dedicated local
 environment: 47 tests passed, Ruff passed after formatting/import cleanup, and
 MyPy completed with explicit configuration for PyTorch and optional-package

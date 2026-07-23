@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   ink-spread, and print/scan corruption with reproducible provenance.
 - Synthetic QR paired-dataset generation with payload-safe data splits,
   metadata, integrity validation, and dataset manifests.
+- QR-specific multi-scale restoration objective and reproducibility recipe.
 
 ### Changed
 

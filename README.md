@@ -94,6 +94,10 @@ train/validation/test split, preventing payload leakage across severity variants
 
 ## Training
 
+For QR restoration, use `configs/train_qr_restoration.yaml` with the
+multi-scale QR objective (structure and differentiable decode-confidence
+surrogates): `mambatransqr train-qr --config configs/train_qr_restoration.yaml`.
+
 Build the model and use the trainer with a paired image loader that yields
 `{"image": tensor, "target": tensor}` batches. Checkpoints are written after
 every epoch as `latest.pt`, and the best monitored validation result is saved as

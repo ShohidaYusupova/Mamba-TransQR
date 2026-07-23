@@ -1,0 +1,21 @@
+seed: 42
+deterministic: true
+dataset_manifest: datasets/synthetic_qr/dataset_manifest.csv
+model:
+  mamba_backend: mamba_ssm
+loss:
+  reconstruction_weight: 1.0
+  ssim_weight: 0.2
+  edge_weight: 0.2
+  structure_weight: 1.0
+  decode_consistency_weight: 0.2
+  perceptual_weight: 0.0
+trainer:
+  epochs: 100
+  device: auto
+  mixed_precision: true
+  gradient_accumulation: 1
+  use_ema: true
+  checkpoint_dir: checkpoints/qr_restoration
+  monitor: val_psnr
+  monitor_mode: max
