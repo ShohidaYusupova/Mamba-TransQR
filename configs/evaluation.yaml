@@ -1,0 +1,17 @@
+# Mamba-TransQR evaluation and benchmark configuration.
+evaluation:
+  device: auto
+  metrics: [psnr, ssim, mse, mae]
+  data_range: 1.0
+
+qr_decoding:
+  backends: [zbar, zxing]
+
+benchmark:
+  warmup: 10
+  iterations: 100
+
+reports:
+  evaluation_json: reports/evaluation.json
+  benchmark_csv: reports/benchmark.csv
+  summary_markdown: reports/summary.md

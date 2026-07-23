@@ -3,8 +3,9 @@
 Mamba-TransQR is a Python toolkit for developing, training, evaluating, and
 deploying Mamba-Transformer models for quality-aware research workflows.
 
-> The implementation is in its initial scaffold stage; public APIs may change
-> before the first stable release.
+Mamba-TransQR provides an end-to-end, configurable workflow for damaged QR
+image restoration: data preparation, hybrid Mamba-Transformer modeling,
+training, evaluation, and deployable inference.
 
 ## Requirements
 
@@ -18,6 +19,20 @@ For a development install:
 python -m pip install --upgrade pip
 python -m pip install -e ".[dev]"
 ```
+
+For a standard runtime install use `python -m pip install -e .`. Full setup
+instructions are in [docs/installation.md](docs/installation.md).
+
+## Quick start
+
+```python
+from mambatransqr.models import ModelConfig, build_model
+
+model = build_model(ModelConfig(image_size=256, patch_size=16))
+```
+
+The model accepts normalized `BCHW` image tensors and returns restored tensors
+with the configured output channels.
 
 ## Development
 
@@ -94,6 +109,26 @@ trainer.fit(train_loader, validation_loader, resume_from="checkpoints/latest.pt"
 ```
 
 Use [configs/training.yaml](configs/training.yaml) as a starting configuration.
+See [docs/training.md](docs/training.md) for the complete guide.
+
+## Evaluation
+
+Evaluate paired predictions with PSNR, SSIM, MSE, and MAE, then write portable
+reports. Optional QR decoding supports ZBar (`pyzbar`) and ZXing
+(`zxing-cpp`) when installed.
+
+```python
+from mambatransqr.evaluation import Evaluator, MetricsManager, ReportGenerator
+
+evaluator = Evaluator(model, MetricsManager(("psnr", "ssim", "mse", "mae")))
+metrics = evaluator.evaluate(test_loader)
+ReportGenerator.evaluation_json(metrics, "reports/evaluation.json")
+```
+
+For inference performance, use `BenchmarkRunner(model).run(example_batch)`;
+it reports throughput/FPS, inference latency, and CPU/GPU memory. See
+[configs/evaluation.yaml](configs/evaluation.yaml) for all report settings.
+See [docs/evaluation.md](docs/evaluation.md) for reports and benchmarking.
 
 ## Inference and export
 
@@ -113,6 +148,14 @@ For Python use, instantiate `Predictor` with a `ModelConfig` and pass it to
 `InferencePipeline`. TorchScript and ONNX exports validate their generated
 artifacts; ONNX supports dynamic batch axes by default. See
 [configs/inference.yaml](configs/inference.yaml) for deployment settings.
+See [docs/inference.md](docs/inference.md) for the full inference guide.
+
+## Architecture
+
+The model combines Mamba-inspired selective state-space mixing with Transformer
+self-attention in hybrid fusion blocks. A patch-token encoder and image decoder
+make the design suitable for image-to-image QR restoration. See
+[docs/architecture.md](docs/architecture.md) for details.
 
 ## Project layout
 

@@ -32,3 +32,5 @@ jobs:
         run: mypy src tests
       - name: Test
         run: pytest --cov=mambatransqr --cov-report=term-missing
+      - name: Build package
+        run: python -m pip wheel . --no-deps --wheel-dir dist
