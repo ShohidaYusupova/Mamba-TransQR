@@ -29,9 +29,9 @@ def mae(predictions: Tensor, targets: Tensor) -> Tensor:
 def psnr(predictions: Tensor, targets: Tensor, data_range: float = 1.0) -> Tensor:
     """Compute peak signal-to-noise ratio in decibels."""
     error = mse(predictions, targets)
-    return 20 * torch.log10(torch.tensor(data_range, device=error.device)) - 10 * torch.log10(
-        error.clamp_min(torch.finfo(error.dtype).eps)
-    )
+    return 20 * torch.log10(
+        torch.tensor(data_range, device=error.device)
+    ) - 10 * torch.log10(error.clamp_min(torch.finfo(error.dtype).eps))
 
 
 def ssim(predictions: Tensor, targets: Tensor, data_range: float = 1.0) -> Tensor:
@@ -77,7 +77,9 @@ def top_k_accuracy(logits: Tensor, targets: Tensor, k: int) -> Tensor:
     return matches.any(dim=1).float().mean()
 
 
-def binary_confusion(predictions: Tensor, targets: Tensor, threshold: float = 0.5) -> tuple[Tensor, Tensor, Tensor, Tensor]:
+def binary_confusion(
+    predictions: Tensor, targets: Tensor, threshold: float = 0.5
+) -> tuple[Tensor, Tensor, Tensor, Tensor]:
     """Return true positives, false positives, false negatives, and true negatives."""
     predicted = predictions >= threshold
     actual = targets.bool()
@@ -90,13 +92,17 @@ def binary_confusion(predictions: Tensor, targets: Tensor, threshold: float = 0.
 
 def precision(predictions: Tensor, targets: Tensor, threshold: float = 0.5) -> Tensor:
     """Compute binary precision."""
-    true_positive, false_positive, _, _ = binary_confusion(predictions, targets, threshold)
+    true_positive, false_positive, _, _ = binary_confusion(
+        predictions, targets, threshold
+    )
     return true_positive.float() / (true_positive + false_positive).clamp_min(1)
 
 
 def recall(predictions: Tensor, targets: Tensor, threshold: float = 0.5) -> Tensor:
     """Compute binary recall."""
-    true_positive, _, false_negative, _ = binary_confusion(predictions, targets, threshold)
+    true_positive, _, false_negative, _ = binary_confusion(
+        predictions, targets, threshold
+    )
     return true_positive.float() / (true_positive + false_negative).clamp_min(1)
 
 
@@ -104,8 +110,13 @@ def f1_score(predictions: Tensor, targets: Tensor, threshold: float = 0.5) -> Te
     """Compute binary F1 score."""
     score_precision = precision(predictions, targets, threshold)
     score_recall = recall(predictions, targets, threshold)
-    return 2 * score_precision * score_recall / (score_precision + score_recall).clamp_min(
-        torch.finfo(score_precision.dtype).eps
+    return (
+        2
+        * score_precision
+        * score_recall
+        / (score_precision + score_recall).clamp_min(
+            torch.finfo(score_precision.dtype).eps
+        )
     )
 
 
@@ -197,7 +208,9 @@ class MetricsManager:
         try:
             import lpips
         except ImportError as error:
-            raise ImportError("LPIPS metric requires the optional lpips package.") from error
+            raise ImportError(
+                "LPIPS metric requires the optional lpips package."
+            ) from error
         model = lpips.LPIPS(net="alex").to(predictions.device)
         model.eval()
         with torch.no_grad():

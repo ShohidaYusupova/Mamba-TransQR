@@ -17,7 +17,7 @@ def create_dataloader(
     pin_memory: bool = False,
     drop_last: bool = False,
     sampler: Any | None = None,
-    collate_fn: Callable[[list[dict[str, Any]]], dict[str, list[Any]]] = qr_collate,
+    collate_fn: Callable[[list[dict[str, Any]]], dict[str, Any]] = qr_collate,
 ) -> Any:
     """Create a configured PyTorch DataLoader.
 

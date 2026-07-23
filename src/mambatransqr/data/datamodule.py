@@ -67,7 +67,9 @@ class QRDataModule:
             RuntimeError: If the training dataset has not been set up.
         """
         if self.train_dataset is None:
-            raise RuntimeError("call setup('fit') before requesting the training loader")
+            raise RuntimeError(
+                "call setup('fit') before requesting the training loader"
+            )
         return create_train_dataloader(
             self.train_dataset,
             batch_size=self.batch_size,

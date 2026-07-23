@@ -27,9 +27,13 @@ class LossManager:
         self.weights = dict(weights or {})
         unknown = set(self.weights) - set(self.losses)
         if unknown:
-            raise ValueError(f"weights configured for unknown losses: {sorted(unknown)}")
+            raise ValueError(
+                f"weights configured for unknown losses: {sorted(unknown)}"
+            )
 
-    def __call__(self, predictions: Tensor, targets: Tensor) -> tuple[Tensor, dict[str, float]]:
+    def __call__(
+        self, predictions: Tensor, targets: Tensor
+    ) -> tuple[Tensor, dict[str, float]]:
         """Compute weighted total and unweighted named scalar losses.
 
         Args:

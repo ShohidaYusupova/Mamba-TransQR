@@ -35,7 +35,11 @@ class QRDecoderEvaluator:
     def decode(self, image: Image.Image) -> DecodeResult:
         """Decode one PIL image and measure decoding latency."""
         started = perf_counter()
-        value = self._decode_zbar(image) if self.backend == "zbar" else self._decode_zxing(image)
+        value = (
+            self._decode_zbar(image)
+            if self.backend == "zbar"
+            else self._decode_zxing(image)
+        )
         return DecodeResult(
             decoded=value is not None,
             value=value,
@@ -53,7 +57,8 @@ class QRDecoderEvaluator:
         return {
             f"{self.backend}_decode_rate": rate,
             "success_rate": rate,
-            "decode_latency_ms": sum(result.latency_ms for result in results) / len(results),
+            "decode_latency_ms": sum(result.latency_ms for result in results)
+            / len(results),
         }
 
     @staticmethod
@@ -62,7 +67,9 @@ class QRDecoderEvaluator:
         try:
             from pyzbar.pyzbar import decode
         except ImportError as error:
-            raise ImportError("ZBar decoding requires the optional pyzbar package.") from error
+            raise ImportError(
+                "ZBar decoding requires the optional pyzbar package."
+            ) from error
         decoded = decode(image)
         return decoded[0].data.decode("utf-8") if decoded else None
 
@@ -72,6 +79,8 @@ class QRDecoderEvaluator:
         try:
             import zxingcpp
         except ImportError as error:
-            raise ImportError("ZXing decoding requires the optional zxing-cpp package.") from error
+            raise ImportError(
+                "ZXing decoding requires the optional zxing-cpp package."
+            ) from error
         result = zxingcpp.read_barcode(np.asarray(image.convert("RGB")))
         return result.text if result is not None else None

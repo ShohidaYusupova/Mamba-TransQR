@@ -30,7 +30,9 @@ class Evaluator:
         self.model = model
         self.metrics = metrics or MetricsManager()
         parameter = next(model.parameters(), None)
-        self.device = device or (parameter.device if parameter is not None else torch.device("cpu"))
+        self.device = device or (
+            parameter.device if parameter is not None else torch.device("cpu")
+        )
         self.model.to(self.device)
 
     @torch.no_grad()

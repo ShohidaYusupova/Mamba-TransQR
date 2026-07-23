@@ -18,7 +18,9 @@ class VideoPredictor:
         """Store the predictor used for video frames."""
         self.predictor = predictor
 
-    def predict_video(self, source: str | Path, output: str | Path) -> list[PredictionResult]:
+    def predict_video(
+        self, source: str | Path, output: str | Path
+    ) -> list[PredictionResult]:
         """Restore a video and return per-frame inference results.
 
         Raises:
@@ -27,7 +29,9 @@ class VideoPredictor:
         try:
             import cv2
         except ImportError as error:
-            raise ImportError("Video inference requires the optional opencv-python package.") from error
+            raise ImportError(
+                "Video inference requires the optional opencv-python package."
+            ) from error
         capture = cv2.VideoCapture(str(source))
         if not capture.isOpened():
             raise ValueError(f"could not open video: {source}")
@@ -37,7 +41,10 @@ class VideoPredictor:
         destination = Path(output)
         destination.parent.mkdir(parents=True, exist_ok=True)
         writer = cv2.VideoWriter(
-            str(destination), cv2.VideoWriter_fourcc(*"mp4v"), frames_per_second, (width, height)
+            str(destination),
+            cv2.VideoWriter_fourcc(*"mp4v"),
+            frames_per_second,
+            (width, height),
         )
         results: list[PredictionResult] = []
         try:

@@ -9,8 +9,8 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from mambatransqr.training import (  # noqa: E402
-    CSVLogger,
     CheckpointManager,
+    CSVLogger,
     EarlyStopping,
     ExponentialMovingAverage,
     LossManager,

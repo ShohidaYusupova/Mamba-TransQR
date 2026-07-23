@@ -8,9 +8,10 @@ from typing import Any
 
 from PIL import Image
 
-
 ImageTransform = Callable[[Image.Image], Any]
-DEFAULT_EXTENSIONS = frozenset({".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"})
+DEFAULT_EXTENSIONS = frozenset(
+    {".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
+)
 
 
 class BaseDataset:
@@ -76,7 +77,9 @@ class QRDataset(BaseDataset):
         super().__init__(root, transform)
         self.target_root = Path(target_root) if target_root is not None else None
         if self.target_root is not None and not self.target_root.is_dir():
-            raise FileNotFoundError(f"target directory does not exist: {self.target_root}")
+            raise FileNotFoundError(
+                f"target directory does not exist: {self.target_root}"
+            )
         self.target_transform = target_transform
 
     def __getitem__(self, index: int) -> dict[str, Any]:
@@ -90,14 +93,19 @@ class QRDataset(BaseDataset):
         """
         path = self.samples[index]
         image = self._load_image(path)
-        sample: dict[str, Any] = {"image": self.transform(image) if self.transform else image, "path": str(path)}
+        sample: dict[str, Any] = {
+            "image": self.transform(image) if self.transform else image,
+            "path": str(path),
+        }
         if self.target_root is not None:
             relative_path = path.relative_to(self.root)
             target_path = self.target_root / relative_path
             if not target_path.is_file():
                 raise FileNotFoundError(f"missing target image: {target_path}")
             target = self._load_image(target_path)
-            sample["target"] = self.target_transform(target) if self.target_transform else target
+            sample["target"] = (
+                self.target_transform(target) if self.target_transform else target
+            )
         return sample
 
 
@@ -113,7 +121,9 @@ class TestDataset(QRDataset):
     """Named dataset type for test splits."""
 
 
-def split_paths(paths: Sequence[Path], fraction: float) -> tuple[tuple[Path, ...], tuple[Path, ...]]:
+def split_paths(
+    paths: Sequence[Path], fraction: float
+) -> tuple[tuple[Path, ...], tuple[Path, ...]]:
     """Split ordered paths into train and validation portions.
 
     Args:

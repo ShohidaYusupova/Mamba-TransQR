@@ -41,7 +41,10 @@ class PatchEmbedding(nn.Module):
         super().__init__()
         self.image_size = _pair(image_size)
         self.patch_size = _pair(patch_size)
-        if any(image % patch for image, patch in zip(self.image_size, self.patch_size, strict=True)):
+        if any(
+            image % patch
+            for image, patch in zip(self.image_size, self.patch_size, strict=True)
+        ):
             raise ValueError("image_size must be divisible by patch_size")
         if in_channels < 1 or embed_dim < 1:
             raise ValueError("in_channels and embed_dim must be positive")
@@ -69,5 +72,7 @@ class PatchEmbedding(nn.Module):
         if inputs.ndim != 4:
             raise ValueError("inputs must have shape (batch, channels, height, width)")
         if tuple(inputs.shape[-2:]) != self.image_size:
-            raise ValueError(f"expected image size {self.image_size}, got {tuple(inputs.shape[-2:])}")
+            raise ValueError(
+                f"expected image size {self.image_size}, got {tuple(inputs.shape[-2:])}"
+            )
         return self.projection(inputs).flatten(2).transpose(1, 2)

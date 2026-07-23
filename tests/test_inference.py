@@ -43,16 +43,18 @@ def test_predictor_runs_single_image_on_cpu() -> None:
         mlp_ratio=2.0,
         dropout=0.0,
     )
-    restored, result = Predictor(config=config, device="cpu", mixed_precision=False).predict_image(
-        Image.new("RGB", (16, 16), "white")
-    )
+    restored, result = Predictor(
+        config=config, device="cpu", mixed_precision=False
+    ).predict_image(Image.new("RGB", (16, 16), "white"))
     assert restored.size == (16, 16)
     assert result.latency_ms >= 0
 
 
 def test_pipeline_writes_json_and_csv_reports(tmp_path: Path) -> None:
     """Pipeline report writer emits both requested report formats."""
-    json_path, csv_path = InferencePipeline.write_reports([PredictionResult()], tmp_path)
+    json_path, csv_path = InferencePipeline.write_reports(
+        [PredictionResult()], tmp_path
+    )
     assert json_path.is_file()
     assert csv_path.is_file()
 

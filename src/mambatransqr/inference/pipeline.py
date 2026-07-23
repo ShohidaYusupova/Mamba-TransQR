@@ -35,10 +35,14 @@ class InferencePipeline:
         self, source: str | Path, output_dir: str | Path, *, save_original: bool = False
     ) -> list[PredictionResult]:
         """Restore all images in a folder and return their results."""
-        return self.batch_predictor.predict_folder(source, output_dir, save_original=save_original)
+        return self.batch_predictor.predict_folder(
+            source, output_dir, save_original=save_original
+        )
 
     @staticmethod
-    def write_reports(results: list[PredictionResult], output_dir: str | Path) -> tuple[Path, Path]:
+    def write_reports(
+        results: list[PredictionResult], output_dir: str | Path
+    ) -> tuple[Path, Path]:
         """Write JSON and CSV inference reports.
 
         Args:

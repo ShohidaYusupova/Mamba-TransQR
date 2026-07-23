@@ -27,7 +27,9 @@ def main() -> None:
     )
     if arguments.command == "predict":
         pipeline = InferencePipeline(predictor)
-        result = pipeline.predict_image(arguments.input, arguments.output, save_original=True)
+        result = pipeline.predict_image(
+            arguments.input, arguments.output, save_original=True
+        )
         pipeline.write_reports([result], arguments.output)
     elif arguments.command == "predict-folder":
         pipeline = InferencePipeline(predictor)
@@ -38,12 +40,19 @@ def main() -> None:
     elif arguments.command == "export":
         model = build_model(config)
         if arguments.checkpoint:
-            Predictor(model, config, checkpoint=arguments.checkpoint, device=arguments.device)
+            Predictor(
+                model, config, checkpoint=arguments.checkpoint, device=arguments.device
+            )
         inputs = torch.zeros(1, 3, arguments.image_size, arguments.image_size)
         if arguments.format == "torchscript":
             export_torchscript(model, inputs, arguments.output)
         else:
-            export_onnx(model, inputs, arguments.output, dynamic_batch=not arguments.static_batch)
+            export_onnx(
+                model,
+                inputs,
+                arguments.output,
+                dynamic_batch=not arguments.static_batch,
+            )
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -61,7 +70,9 @@ def _parser() -> argparse.ArgumentParser:
     export = subcommands.add_parser("export")
     export.add_argument("output", type=Path)
     export.add_argument("--checkpoint")
-    export.add_argument("--format", choices=("torchscript", "onnx"), default="torchscript")
+    export.add_argument(
+        "--format", choices=("torchscript", "onnx"), default="torchscript"
+    )
     export.add_argument("--device", default="cpu")
     export.add_argument("--image-size", type=int, default=256)
     export.add_argument("--no-amp", action="store_true")

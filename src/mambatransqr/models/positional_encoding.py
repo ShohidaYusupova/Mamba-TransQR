@@ -17,7 +17,9 @@ class LearnablePositionalEncoding(nn.Module):
         dropout: Dropout probability applied after position addition.
     """
 
-    def __init__(self, num_positions: int, embed_dim: int, dropout: float = 0.0) -> None:
+    def __init__(
+        self, num_positions: int, embed_dim: int, dropout: float = 0.0
+    ) -> None:
         """Initialize learnable position parameters."""
         super().__init__()
         if num_positions < 1 or embed_dim < 1:
@@ -29,7 +31,9 @@ class LearnablePositionalEncoding(nn.Module):
     def forward(self, tokens: Tensor) -> Tensor:
         """Add positions to a batch of tokens."""
         if tokens.shape[1] > self.position.shape[1]:
-            raise ValueError("token count exceeds configured positional-encoding length")
+            raise ValueError(
+                "token count exceeds configured positional-encoding length"
+            )
         return self.dropout(tokens + self.position[:, : tokens.shape[1]])
 
 
@@ -42,7 +46,9 @@ class SinusoidalPositionalEncoding(nn.Module):
         dropout: Dropout probability applied after position addition.
     """
 
-    def __init__(self, num_positions: int, embed_dim: int, dropout: float = 0.0) -> None:
+    def __init__(
+        self, num_positions: int, embed_dim: int, dropout: float = 0.0
+    ) -> None:
         """Create the fixed positional-encoding buffer."""
         super().__init__()
         if num_positions < 1 or embed_dim < 1:
@@ -61,5 +67,9 @@ class SinusoidalPositionalEncoding(nn.Module):
     def forward(self, tokens: Tensor) -> Tensor:
         """Add fixed positions to a batch of tokens."""
         if tokens.shape[1] > self.encoding.shape[1]:
-            raise ValueError("token count exceeds configured positional-encoding length")
-        return self.dropout(tokens + self.encoding[:, : tokens.shape[1]].to(tokens.dtype))
+            raise ValueError(
+                "token count exceeds configured positional-encoding length"
+            )
+        return self.dropout(
+            tokens + self.encoding[:, : tokens.shape[1]].to(tokens.dtype)
+        )

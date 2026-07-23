@@ -6,7 +6,6 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 from typing import Any
 
-import torch
 from torch import Tensor
 
 
@@ -29,7 +28,9 @@ class EvaluationVisualizer:
         return _save(figure, path)
 
     @staticmethod
-    def training_history(records: Sequence[Mapping[str, float]], path: str | Path) -> Path:
+    def training_history(
+        records: Sequence[Mapping[str, float]], path: str | Path
+    ) -> Path:
         """Plot metrics extracted from trainer history records."""
         history: dict[str, list[float]] = {}
         for record in records:
@@ -50,7 +51,9 @@ class EvaluationVisualizer:
         return _save(figure, path)
 
     @staticmethod
-    def roc_curve(false_positive_rate: Tensor, true_positive_rate: Tensor, path: str | Path) -> Path:
+    def roc_curve(
+        false_positive_rate: Tensor, true_positive_rate: Tensor, path: str | Path
+    ) -> Path:
         """Plot a ROC curve."""
         pyplot = _pyplot()
         figure, axis = pyplot.subplots()
@@ -63,14 +66,20 @@ class EvaluationVisualizer:
 
     @staticmethod
     def sample_predictions(
-        inputs: Tensor, predictions: Tensor, targets: Tensor, path: str | Path, count: int = 4
+        inputs: Tensor,
+        predictions: Tensor,
+        targets: Tensor,
+        path: str | Path,
+        count: int = 4,
     ) -> Path:
         """Plot input, prediction, and target triplets for sample images."""
         if count < 1:
             raise ValueError("count must be positive")
         pyplot = _pyplot()
         samples = min(count, inputs.shape[0], predictions.shape[0], targets.shape[0])
-        figure, axes = pyplot.subplots(samples, 3, squeeze=False, figsize=(9, 3 * samples))
+        figure, axes = pyplot.subplots(
+            samples, 3, squeeze=False, figsize=(9, 3 * samples)
+        )
         for index in range(samples):
             for axis, image, title in zip(
                 axes[index],
@@ -89,7 +98,9 @@ def _pyplot() -> Any:
     try:
         import matplotlib.pyplot as pyplot
     except ImportError as error:
-        raise ImportError("Visualization requires the optional matplotlib package.") from error
+        raise ImportError(
+            "Visualization requires the optional matplotlib package."
+        ) from error
     return pyplot
 
 

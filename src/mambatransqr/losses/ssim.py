@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from torch import Tensor, nn
 
+
 class SSIMLoss(nn.Module):
     """Minimize one minus global structural similarity.
 
@@ -21,7 +22,9 @@ class SSIMLoss(nn.Module):
         dimensions = tuple(range(2, predictions.ndim))
         mean_x = predictions.mean(dim=dimensions, keepdim=True)
         mean_y = targets.mean(dim=dimensions, keepdim=True)
-        variance_x = ((predictions - mean_x).square()).mean(dim=dimensions, keepdim=True)
+        variance_x = ((predictions - mean_x).square()).mean(
+            dim=dimensions, keepdim=True
+        )
         variance_y = ((targets - mean_y).square()).mean(dim=dimensions, keepdim=True)
         covariance = ((predictions - mean_x) * (targets - mean_y)).mean(
             dim=dimensions, keepdim=True

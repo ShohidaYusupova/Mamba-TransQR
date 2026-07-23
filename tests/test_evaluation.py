@@ -49,7 +49,9 @@ def test_evaluator_averages_batch_metrics() -> None:
 
 def test_confusion_matrix_and_roc_are_computed() -> None:
     """Confusion matrix and ROC helpers return expected tensor shapes."""
-    matrix = compute_confusion_matrix(torch.tensor([0, 1, 1]), torch.tensor([0, 1, 0]), 2)
+    matrix = compute_confusion_matrix(
+        torch.tensor([0, 1, 1]), torch.tensor([0, 1, 0]), 2
+    )
     false_positive_rate, true_positive_rate, _ = roc_curve(
         torch.tensor([0.1, 0.9]), torch.tensor([0, 1])
     )
@@ -60,9 +62,13 @@ def test_confusion_matrix_and_roc_are_computed() -> None:
 def test_reports_are_written(tmp_path: Path) -> None:
     """Report generator writes JSON, CSV, and Markdown report artifacts."""
     metrics = {"mse": 0.1, "psnr": 20.0}
-    assert ReportGenerator.evaluation_json(metrics, tmp_path / "evaluation.json").is_file()
+    assert ReportGenerator.evaluation_json(
+        metrics, tmp_path / "evaluation.json"
+    ).is_file()
     assert ReportGenerator.benchmark_csv(metrics, tmp_path / "benchmark.csv").is_file()
-    assert ReportGenerator.summary_markdown(metrics, metrics, tmp_path / "summary.md").is_file()
+    assert ReportGenerator.summary_markdown(
+        metrics, metrics, tmp_path / "summary.md"
+    ).is_file()
 
 
 def test_statistics_summary_has_expected_mean() -> None:

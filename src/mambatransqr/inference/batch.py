@@ -46,7 +46,9 @@ class BatchPredictor:
             restored_path.parent.mkdir(parents=True, exist_ok=True)
             restored.save(restored_path)
             if save_original:
-                original_path = destination / f"{path.stem}_original{path.suffix.lower()}"
+                original_path = (
+                    destination / f"{path.stem}_original{path.suffix.lower()}"
+                )
                 original_path.write_bytes(path.read_bytes())
             result.restored_path = str(restored_path)
             results.append(result)
@@ -64,5 +66,7 @@ class BatchPredictor:
         root = Path(folder)
         pattern = "**/*" if recursive else "*"
         extensions = {".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
-        paths = sorted(path for path in root.glob(pattern) if path.suffix.lower() in extensions)
+        paths = sorted(
+            path for path in root.glob(pattern) if path.suffix.lower() in extensions
+        )
         return self.predict_paths(paths, output_dir, save_original=save_original)

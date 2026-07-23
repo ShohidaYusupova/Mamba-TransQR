@@ -50,5 +50,8 @@ class TrainingState:
             ),
             best_epoch=int(values.get("best_epoch", 0)),
             stopped_early=bool(values.get("stopped_early", False)),
-            metrics={str(key): float(value) for key, value in values.get("metrics", {}).items()},
+            metrics={
+                str(key): float(value)
+                for key, value in values.get("metrics", {}).items()
+            },
         )

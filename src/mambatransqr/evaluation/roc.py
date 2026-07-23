@@ -6,7 +6,9 @@ import torch
 from torch import Tensor
 
 
-def roc_curve(scores: Tensor, targets: Tensor, thresholds: int = 101) -> tuple[Tensor, Tensor, Tensor]:
+def roc_curve(
+    scores: Tensor, targets: Tensor, thresholds: int = 101
+) -> tuple[Tensor, Tensor, Tensor]:
     """Compute binary ROC false-positive and true-positive rates.
 
     Args:

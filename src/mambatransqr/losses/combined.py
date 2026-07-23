@@ -15,7 +15,11 @@ class CombinedLoss(nn.Module):
         weights: Optional mapping of loss multipliers.
     """
 
-    def __init__(self, losses: Mapping[str, nn.Module], weights: Mapping[str, float] | None = None) -> None:
+    def __init__(
+        self,
+        losses: Mapping[str, nn.Module],
+        weights: Mapping[str, float] | None = None,
+    ) -> None:
         """Register all loss modules and validate weight names."""
         super().__init__()
         if not losses:

@@ -50,14 +50,18 @@ class HybridFusionBlock(nn.Module):
         )
         self.fusion_norm = nn.LayerNorm(embed_dim * 2)
         self.gate = nn.Linear(embed_dim * 2, embed_dim)
-        self.projection = nn.Sequential(nn.Linear(embed_dim, embed_dim), nn.Dropout(dropout))
+        self.projection = nn.Sequential(
+            nn.Linear(embed_dim, embed_dim), nn.Dropout(dropout)
+        )
         self.drop_path = DropPath(drop_path)
 
     def forward(self, tokens: Tensor) -> Tensor:
         """Fuse the Mamba and Transformer residual branch outputs."""
         mamba_tokens = self.mamba(tokens)
         transformer_tokens = self.transformer(tokens)
-        features = self.fusion_norm(torch.cat((mamba_tokens, transformer_tokens), dim=-1))
+        features = self.fusion_norm(
+            torch.cat((mamba_tokens, transformer_tokens), dim=-1)
+        )
         gate = torch.sigmoid(self.gate(features))
         fused = gate * mamba_tokens + (1.0 - gate) * transformer_tokens
         return tokens + self.drop_path(self.projection(fused))

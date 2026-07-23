@@ -32,4 +32,6 @@ def summarize(values: list[float]) -> StatisticsResult:
     average = mean(values)
     deviation = stdev(values) if len(values) > 1 else 0.0
     radius = 1.96 * deviation / sqrt(len(values))
-    return StatisticsResult(average, deviation, average - radius, average + radius, len(values))
+    return StatisticsResult(
+        average, deviation, average - radius, average + radius, len(values)
+    )

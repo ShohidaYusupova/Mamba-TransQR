@@ -46,7 +46,9 @@ class Decoder(nn.Module):
         self.num_patches = self.grid_size[0] * self.grid_size[1]
         patch_pixels = self.patch_size[0] * self.patch_size[1] * out_channels
         self.norm = nn.LayerNorm(embed_dim)
-        self.head = nn.Sequential(nn.Dropout(dropout), nn.Linear(embed_dim, patch_pixels))
+        self.head = nn.Sequential(
+            nn.Dropout(dropout), nn.Linear(embed_dim, patch_pixels)
+        )
         self.out_channels = out_channels
 
     def forward(self, tokens: Tensor) -> Tensor:

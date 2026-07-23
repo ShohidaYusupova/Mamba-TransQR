@@ -39,7 +39,9 @@ class QRDamageGenerator:
         if invalid:
             raise ValueError(f"unknown damage operations: {sorted(invalid)}")
         if not 0 <= self.count <= len(self.enabled):
-            raise ValueError("count must be between 0 and the number of enabled damages")
+            raise ValueError(
+                "count must be between 0 and the number of enabled damages"
+            )
         self._rng = Random(self.seed)
 
     @staticmethod
@@ -102,7 +104,9 @@ class QRDamageGenerator:
         for _ in range(self._rng.randint(1, 4)):
             x0, y0 = self._rng.randrange(width), self._rng.randrange(height)
             x1 = min(width - 1, max(0, x0 + self._rng.randint(-width // 2, width // 2)))
-            y1 = min(height - 1, max(0, y0 + self._rng.randint(-height // 2, height // 2)))
+            y1 = min(
+                height - 1, max(0, y0 + self._rng.randint(-height // 2, height // 2))
+            )
             color = self._rng.choice([(0, 0, 0), (255, 255, 255)])
             draw.line((x0, y0, x1, y1), fill=color, width=self._rng.randint(1, 3))
         return result

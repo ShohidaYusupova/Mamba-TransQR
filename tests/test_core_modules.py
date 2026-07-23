@@ -9,7 +9,11 @@ import pytest
 torch = pytest.importorskip("torch")
 
 from mambatransqr.experiments import Experiment  # noqa: E402
-from mambatransqr.losses import CharbonnierLoss, CombinedLoss, ReconstructionLoss  # noqa: E402
+from mambatransqr.losses import (  # noqa: E402
+    CharbonnierLoss,
+    CombinedLoss,
+    ReconstructionLoss,
+)
 from mambatransqr.metrics import MetricsManager  # noqa: E402
 
 

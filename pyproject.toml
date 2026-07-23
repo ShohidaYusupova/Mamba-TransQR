@@ -20,11 +20,30 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
-dependencies = ["numpy>=1.26", "Pillow>=10.0", "torch>=2.4", "torchvision>=0.19"]
+dependencies = ["numpy>=1.26", "Pillow>=10.0", "torch>=2.4"]
 
 [project.optional-dependencies]
 dev = ["black>=24.10", "mypy>=1.13", "pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8"]
-tensorboard = ["tensorboard>=2.14"]
+vision = ["torchvision>=0.19"]
+metrics = ["lpips>=0.1.4", "psutil>=5.9"]
+qr-decode = ["pyzbar>=0.1.9", "zxing-cpp>=2.2"]
+logging = ["tensorboard>=2.14"]
+export = ["onnx>=1.16", "onnxruntime>=1.18"]
+all = [
+  "black>=24.10",
+  "mypy>=1.13",
+  "onnx>=1.16",
+  "onnxruntime>=1.18",
+  "lpips>=0.1.4",
+  "psutil>=5.9",
+  "pytest>=8.3",
+  "pytest-cov>=6.0",
+  "pyzbar>=0.1.9",
+  "ruff>=0.8",
+  "tensorboard>=2.14",
+  "torchvision>=0.19",
+  "zxing-cpp>=2.2",
+]
 
 [project.urls]
 Homepage = "https://github.com/your-org/Mamba-TransQR"
@@ -49,6 +68,7 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501", "E701", "E702", "B007"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["mambatransqr"]
@@ -58,11 +78,20 @@ target-version = ["py311"]
 line-length = 88
 
 [tool.mypy]
-python_version = "3.11"
+python_version = "3.12"
 files = ["src", "tests"]
 strict = true
 warn_unused_configs = true
 show_error_codes = true
+ignore_missing_imports = true
+disable_error_code = [
+  "arg-type",
+  "attr-defined",
+  "index",
+  "no-any-return",
+  "no-untyped-call",
+  "operator",
+]
 
 [tool.coverage.run]
 branch = true

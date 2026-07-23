@@ -14,7 +14,9 @@ class ReportGenerator:
     def evaluation_json(metrics: dict[str, float], path: str | Path) -> Path:
         """Write a JSON evaluation report and return its path."""
         destination = _prepare(path)
-        destination.write_text(json.dumps(metrics, indent=2, sort_keys=True), encoding="utf-8")
+        destination.write_text(
+            json.dumps(metrics, indent=2, sort_keys=True), encoding="utf-8"
+        )
         return destination
 
     @staticmethod
@@ -33,10 +35,21 @@ class ReportGenerator:
     ) -> Path:
         """Write a concise Markdown evaluation summary and return its path."""
         destination = _prepare(path)
-        rows = ["# Evaluation Summary", "", "## Evaluation", "", "| Metric | Value |", "|---|---:|"]
-        rows.extend(f"| {name} | {value:.6f} |" for name, value in sorted(evaluation.items()))
+        rows = [
+            "# Evaluation Summary",
+            "",
+            "## Evaluation",
+            "",
+            "| Metric | Value |",
+            "|---|---:|",
+        ]
+        rows.extend(
+            f"| {name} | {value:.6f} |" for name, value in sorted(evaluation.items())
+        )
         rows.extend(["", "## Benchmark", "", "| Metric | Value |", "|---|---:|"])
-        rows.extend(f"| {name} | {value:.6f} |" for name, value in sorted(benchmark.items()))
+        rows.extend(
+            f"| {name} | {value:.6f} |" for name, value in sorted(benchmark.items())
+        )
         destination.write_text("\n".join(rows) + "\n", encoding="utf-8")
         return destination
 

@@ -24,7 +24,9 @@ def select_device(requested: str = "auto") -> torch.device:
     return device
 
 
-def autocast_context(device: torch.device, enabled: bool = True) -> AbstractContextManager[None]:
+def autocast_context(
+    device: torch.device, enabled: bool = True
+) -> AbstractContextManager[None]:
     """Return an AMP context when CUDA mixed precision is available."""
     if enabled and device.type == "cuda":
         return torch.autocast(device_type="cuda", dtype=torch.float16)

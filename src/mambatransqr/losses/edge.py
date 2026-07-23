@@ -12,12 +12,24 @@ class EdgeLoss(nn.Module):
     def __init__(self) -> None:
         """Initialize fixed Sobel kernels."""
         super().__init__()
-        self.register_buffer("horizontal", torch.tensor([[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]]).view(1, 1, 3, 3))
-        self.register_buffer("vertical", torch.tensor([[-1.0, -2.0, -1.0], [0.0, 0.0, 0.0], [1.0, 2.0, 1.0]]).view(1, 1, 3, 3))
+        self.register_buffer(
+            "horizontal",
+            torch.tensor([[-1.0, 0.0, 1.0], [-2.0, 0.0, 2.0], [-1.0, 0.0, 1.0]]).view(
+                1, 1, 3, 3
+            ),
+        )
+        self.register_buffer(
+            "vertical",
+            torch.tensor([[-1.0, -2.0, -1.0], [0.0, 0.0, 0.0], [1.0, 2.0, 1.0]]).view(
+                1, 1, 3, 3
+            ),
+        )
 
     def forward(self, predictions: Tensor, targets: Tensor) -> Tensor:
         """Return L1 difference of channelwise Sobel edge magnitudes."""
-        return torch.nn.functional.l1_loss(self._edges(predictions), self._edges(targets))
+        return torch.nn.functional.l1_loss(
+            self._edges(predictions), self._edges(targets)
+        )
 
     def _edges(self, images: Tensor) -> Tensor:
         """Calculate per-channel Sobel magnitude."""

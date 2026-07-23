@@ -38,7 +38,9 @@ class SchedulerFactory:
         settings = config or SchedulerConfig()
         name = settings.name.lower()
         if name == "cosine":
-            return optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=settings.epochs)
+            return optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, T_max=settings.epochs
+            )
         if name == "step":
             return optim.lr_scheduler.StepLR(
                 optimizer,

@@ -10,7 +10,6 @@ from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import Any
 
-
 ImageTransform = Callable[[Any], Any]
 
 
@@ -26,6 +25,17 @@ def _functional() -> Any:
         message = "torchvision is required to apply data transforms."
         raise ImportError(message) from error
     return functional
+
+
+def _torchvision_transform(name: str) -> Any:
+    """Load a torchvision transform class with a clear dependency error."""
+    try:
+        from torchvision import transforms
+    except ImportError as error:
+        raise ImportError(
+            "Image transforms require the 'vision' optional dependency."
+        ) from error
+    return getattr(transforms, name)
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,9 +82,9 @@ class RandomCrop:
 
     def __call__(self, image: Any) -> Any:
         """Apply the random crop transform."""
-        from torchvision.transforms import RandomCrop as TorchRandomCrop
-
-        return TorchRandomCrop(self.size, padding=self.padding)(image)
+        return _torchvision_transform("RandomCrop")(self.size, padding=self.padding)(
+            image
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -94,9 +104,7 @@ class RandomHorizontalFlip:
 
     def __call__(self, image: Any) -> Any:
         """Apply the random horizontal flip transform."""
-        from torchvision.transforms import RandomHorizontalFlip as TorchFlip
-
-        return TorchFlip(p=self.probability)(image)
+        return _torchvision_transform("RandomHorizontalFlip")(p=self.probability)(image)
 
 
 @dataclass(frozen=True, slots=True)

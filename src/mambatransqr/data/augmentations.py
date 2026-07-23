@@ -82,7 +82,9 @@ class MotionBlur:
         offset = (self.kernel_size // 2) * self.kernel_size
         for index in range(self.kernel_size):
             kernel[offset + index] = 1.0 / self.kernel_size
-        return image.filter(ImageFilter.Kernel((self.kernel_size, self.kernel_size), kernel))
+        return image.filter(
+            ImageFilter.Kernel((self.kernel_size, self.kernel_size), kernel)
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -148,7 +150,9 @@ def _perspective_coefficients(
     matrix: list[list[float]] = []
     values: list[float] = []
     for (x, y), (u, v) in zip(source, target, strict=True):
-        matrix.extend([[x, y, 1, 0, 0, 0, -u * x, -u * y], [0, 0, 0, x, y, 1, -v * x, -v * y]])
+        matrix.extend(
+            [[x, y, 1, 0, 0, 0, -u * x, -u * y], [0, 0, 0, x, y, 1, -v * x, -v * y]]
+        )
         values.extend([u, v])
     return tuple(np.linalg.solve(np.asarray(matrix), np.asarray(values)).tolist())
 
@@ -183,7 +187,9 @@ class RandomShadow:
         y1 = self._rng.randint(y0 + 1, height)
         alpha = int(255 * self._rng.uniform(0.1, self.opacity))
         draw.ellipse((x0, y0, x1, y1), fill=(0, 0, 0, alpha))
-        return Image.alpha_composite(_rgb(image).convert("RGBA"), overlay).convert("RGB")
+        return Image.alpha_composite(_rgb(image).convert("RGBA"), overlay).convert(
+            "RGB"
+        )
 
 
 @dataclass(slots=True)
@@ -215,7 +221,11 @@ class RandomRain:
             x = self._rng.randrange(width)
             y = self._rng.randrange(height)
             length = self._rng.randint(3, max(3, height // 8))
-            draw.line((x, y, x - length // 3, min(height - 1, y + length)), fill=(180, 180, 180), width=1)
+            draw.line(
+                (x, y, x - length // 3, min(height - 1, y + length)),
+                fill=(180, 180, 180),
+                width=1,
+            )
         return result
 
 
@@ -250,5 +260,7 @@ class RandomOcclusion:
         box_height = min(height, side)
         x = self._rng.randint(0, width - box_width)
         y = self._rng.randint(0, height - box_height)
-        ImageDraw.Draw(result).rectangle((x, y, x + box_width, y + box_height), fill=self.fill)
+        ImageDraw.Draw(result).rectangle(
+            (x, y, x + box_width, y + box_height), fill=self.fill
+        )
         return result

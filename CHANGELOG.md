@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 - Production documentation, package exports, CLI configuration, and release
   quality checks.
+- Tensor batch collation now integrates with the training engine; a CPU
+  end-to-end restoration smoke test covers training, checkpointing, inference,
+  and evaluation.
 
 ## [0.1.0] - 2026-07-23
 

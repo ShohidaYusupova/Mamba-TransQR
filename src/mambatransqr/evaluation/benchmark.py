@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 import tracemalloc
+import warnings
 from dataclasses import asdict, dataclass
 
 import torch
@@ -40,7 +41,9 @@ class BenchmarkRunner:
     def __init__(self, model: nn.Module, device: torch.device | None = None) -> None:
         """Store the benchmark target and choose its device."""
         parameter = next(model.parameters(), None)
-        self.device = device or (parameter.device if parameter is not None else torch.device("cpu"))
+        self.device = device or (
+            parameter.device if parameter is not None else torch.device("cpu")
+        )
         self.model = model.to(self.device).eval()
 
     @torch.no_grad()
@@ -93,5 +96,11 @@ def _rss_bytes() -> int:
     try:
         import psutil
     except ImportError:
+        warnings.warn(
+            "CPU RSS measurement requires the 'metrics' optional dependency; "
+            "reporting traced Python allocations only.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
         return 0
     return int(psutil.Process(os.getpid()).memory_info().rss)

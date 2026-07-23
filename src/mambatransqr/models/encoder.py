@@ -67,7 +67,9 @@ class Encoder(nn.Module):
             raise ValueError(
                 "positional_encoding must be 'learnable' or 'sinusoidal'"
             ) from error
-        self.position = position_layer(self.patch_embedding.num_patches, embed_dim, dropout)
+        self.position = position_layer(
+            self.patch_embedding.num_patches, embed_dim, dropout
+        )
         rates = [drop_path_rate * index / max(depth - 1, 1) for index in range(depth)]
         self.blocks = nn.ModuleList(
             HybridFusionBlock(

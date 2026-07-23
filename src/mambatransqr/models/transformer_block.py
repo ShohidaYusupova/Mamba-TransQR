@@ -55,6 +55,8 @@ class TransformerBlock(nn.Module):
     def forward(self, tokens: Tensor) -> Tensor:
         """Apply attention and MLP residual branches."""
         normalized = self.norm1(tokens)
-        attended, _ = self.attention(normalized, normalized, normalized, need_weights=False)
+        attended, _ = self.attention(
+            normalized, normalized, normalized, need_weights=False
+        )
         tokens = tokens + self.drop_path(attended)
         return tokens + self.drop_path(self.mlp(self.norm2(tokens)))

@@ -8,7 +8,9 @@ import torch
 from torch import Tensor, nn
 
 
-def export_torchscript(model: nn.Module, example_input: Tensor, path: str | Path) -> Path:
+def export_torchscript(
+    model: nn.Module, example_input: Tensor, path: str | Path
+) -> Path:
     """Export a model as a validated TorchScript artifact.
 
     Args:
@@ -78,8 +80,10 @@ def validate_onnx(path: str | Path) -> None:
     """Validate ONNX graph structure when the optional ONNX package is installed."""
     try:
         import onnx
-    except ImportError:
-        return
+    except ImportError as error:
+        raise ImportError(
+            "ONNX export validation requires the 'export' optional dependency."
+        ) from error
     onnx.checker.check_model(str(path))
 
 

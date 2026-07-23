@@ -15,7 +15,7 @@ from mambatransqr.inference.postprocessing import tensor_to_image
 from mambatransqr.inference.preprocessing import load_image, preprocess_image
 from mambatransqr.inference.result import PredictionResult
 from mambatransqr.inference.runtime import autocast_context, select_device
-from mambatransqr.models import MambaTransQR, ModelConfig, build_model
+from mambatransqr.models import ModelConfig, build_model
 
 
 class Predictor:
@@ -55,7 +55,9 @@ class Predictor:
     def load_checkpoint(self, path: str | Path) -> None:
         """Load model parameters from a Trainer or raw state-dict checkpoint."""
         payload: Any = torch.load(path, map_location=self.device, weights_only=False)
-        state_dict = payload.get("model", payload) if isinstance(payload, dict) else payload
+        state_dict = (
+            payload.get("model", payload) if isinstance(payload, dict) else payload
+        )
         self.model.load_state_dict(state_dict)
         self.model.eval()
 

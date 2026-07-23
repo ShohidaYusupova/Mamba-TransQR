@@ -72,7 +72,11 @@ class Trainer:
         self.set_seed(self.config.seed)
         self.device = self.select_device(self.config.device)
         self.model = model.to(self.device)
-        if self.config.multi_gpu and self.device.type == "cuda" and torch.cuda.device_count() > 1:
+        if (
+            self.config.multi_gpu
+            and self.device.type == "cuda"
+            and torch.cuda.device_count() > 1
+        ):
             self.model = nn.DataParallel(self.model)
         self.optimizer = optimizer
         self.scheduler = scheduler
@@ -131,7 +135,9 @@ class Trainer:
                 validation_metrics = self.engine.evaluate(validation_loader)
                 if self.ema is not None:
                     self.ema.restore(self.model)
-                metrics.update({f"val_{key}": value for key, value in validation_metrics.items()})
+                metrics.update(
+                    {f"val_{key}": value for key, value in validation_metrics.items()}
+                )
             self._step_scheduler(metrics)
             self.state.epoch = epoch
             self.state.metrics = metrics
@@ -183,7 +189,10 @@ class Trainer:
         if requested == "auto":
             if torch.cuda.is_available():
                 return torch.device("cuda")
-            if getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+            if (
+                getattr(torch.backends, "mps", None)
+                and torch.backends.mps.is_available()
+            ):
                 return torch.device("mps")
             return torch.device("cpu")
         device = torch.device(requested)
