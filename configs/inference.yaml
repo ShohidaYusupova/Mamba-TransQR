@@ -1,0 +1,21 @@
+# Mamba-TransQR inference and deployment configuration.
+model:
+  image_size: 256
+  patch_size: 16
+  embed_dim: 256
+  depth: 8
+  num_heads: 8
+
+inference:
+  checkpoint: checkpoints/best.pt
+  device: auto
+  mixed_precision: true
+  decoder_backend: null
+  output_dir: outputs
+  save_original: true
+
+export:
+  format: torchscript
+  output_path: exports/mambatransqr.pt
+  dynamic_batch: true
+  opset_version: 17

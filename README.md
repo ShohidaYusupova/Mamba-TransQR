@@ -95,6 +95,25 @@ trainer.fit(train_loader, validation_loader, resume_from="checkpoints/latest.pt"
 
 Use [configs/training.yaml](configs/training.yaml) as a starting configuration.
 
+## Inference and export
+
+Run a checkpoint over one image, a folder, or video frames. Image results save
+the restored image plus JSON and CSV reports. CUDA AMP is enabled automatically
+when available.
+
+```bash
+mambatransqr predict input.png outputs/ --checkpoint checkpoints/best.pt
+mambatransqr predict-folder images/ outputs/ --checkpoint checkpoints/best.pt
+mambatransqr predict-video input.mp4 outputs/restored.mp4 --checkpoint checkpoints/best.pt
+mambatransqr export exports/model.pt --checkpoint checkpoints/best.pt --format torchscript
+mambatransqr export exports/model.onnx --checkpoint checkpoints/best.pt --format onnx
+```
+
+For Python use, instantiate `Predictor` with a `ModelConfig` and pass it to
+`InferencePipeline`. TorchScript and ONNX exports validate their generated
+artifacts; ONNX supports dynamic batch axes by default. See
+[configs/inference.yaml](configs/inference.yaml) for deployment settings.
+
 ## Project layout
 
 ```text

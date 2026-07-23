@@ -31,6 +31,9 @@ Homepage = "https://github.com/your-org/Mamba-TransQR"
 Repository = "https://github.com/your-org/Mamba-TransQR"
 Issues = "https://github.com/your-org/Mamba-TransQR/issues"
 
+[project.scripts]
+mambatransqr = "mambatransqr.inference.cli:main"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/mambatransqr"]
 
