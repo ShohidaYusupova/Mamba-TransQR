@@ -7,6 +7,10 @@ from pathlib import Path
 
 import torch
 
+from mambatransqr.data.dataset_builder import (
+    SyntheticQRDatasetBuilder,
+    load_generation_config,
+)
 from mambatransqr.inference.export import export_onnx, export_torchscript
 from mambatransqr.inference.pipeline import InferencePipeline
 from mambatransqr.inference.predictor import Predictor
@@ -18,6 +22,11 @@ def main() -> None:
     """Parse command-line arguments and dispatch an inference command."""
     parser = _parser()
     arguments = parser.parse_args()
+    if arguments.command == "generate-dataset":
+        SyntheticQRDatasetBuilder(load_generation_config(arguments.config)).build(
+            arguments.output
+        )
+        return
     config = ModelConfig(image_size=arguments.image_size)
     predictor = Predictor(
         config=config,
@@ -77,4 +86,7 @@ def _parser() -> argparse.ArgumentParser:
     export.add_argument("--image-size", type=int, default=256)
     export.add_argument("--no-amp", action="store_true")
     export.add_argument("--static-batch", action="store_true")
+    generate = subcommands.add_parser("generate-dataset")
+    generate.add_argument("--config", type=Path, required=True)
+    generate.add_argument("--output", type=Path, required=True)
     return parser

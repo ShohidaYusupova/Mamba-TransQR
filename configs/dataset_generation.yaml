@@ -1,0 +1,14 @@
+# Deterministic synthetic QR paired-dataset generation.
+samples: 1000
+seed: 42
+versions: [1, 5, 10, 20, 30, 40]
+error_correction_levels: [L, M, Q, H]
+payload_types: [alphanumeric, numeric, byte, url]
+payload_length: 12
+image_size: 256
+border: 4
+foreground: "#000000"
+background: "#ffffff"
+severities: [mild, moderate, severe]
+decoder_backend: null
+split_ratios: [0.7, 0.15, 0.15]

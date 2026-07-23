@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   expansion settings, plus backend identity in checkpoints and reports.
 - Module-aware QR degradation engine for dropout, occlusion, finder-pattern,
   ink-spread, and print/scan corruption with reproducible provenance.
+- Synthetic QR paired-dataset generation with payload-safe data splits,
+  metadata, integrity validation, and dataset manifests.
 
 ### Changed
 

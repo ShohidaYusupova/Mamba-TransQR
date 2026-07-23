@@ -27,6 +27,7 @@ dev = ["black>=24.10", "mypy>=1.13", "pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.
 vision = ["torchvision>=0.19"]
 metrics = ["lpips>=0.1.4", "psutil>=5.9"]
 qr-decode = ["pyzbar>=0.1.9", "zxing-cpp>=2.2"]
+qr-generation = ["qrcode[pil]>=7.4", "PyYAML>=6.0"]
 logging = ["tensorboard>=2.14"]
 export = ["onnx>=1.16", "onnxruntime>=1.18"]
 mamba = ["mamba-ssm>=2.2"]
@@ -41,6 +42,8 @@ all = [
   "pytest>=8.3",
   "pytest-cov>=6.0",
   "pyzbar>=0.1.9",
+  "PyYAML>=6.0",
+  "qrcode[pil]>=7.4",
   "ruff>=0.8",
   "tensorboard>=2.14",
   "torchvision>=0.19",

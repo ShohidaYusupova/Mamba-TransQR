@@ -21,3 +21,12 @@ trainer.fit(train_loader, validation_loader)
 ```
 
 See `configs/training.yaml` for all training options.
+
+## Synthetic QR pairs
+
+Generate reproducible clean/damaged QR pairs with
+`configs/dataset_generation.yaml`. The output stores damaged inputs under each
+split's `damaged/` directory and matching clean targets under `clean/`; use the
+split directories as `root` and `target_root` when constructing `QRDataset`.
+Each metadata JSON records payload, QR settings, degradation provenance, and
+decoder readability. Install the optional renderer with `.[qr-generation]`.

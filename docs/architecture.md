@@ -20,3 +20,7 @@ self-contained recurrence. It is not the official Mamba selective SSM and
 emits a warning; use it only where an explicit CPU-compatible smoke backend is
 needed. Every checkpoint and report records `mamba_backend`,
 `mamba_implementation`, and `mamba_ssm_version` for traceability.
+
+Synthetic QR training data is generated from an explicit QR module grid. The
+dataset builder applies module-aware degradations at mild, moderate, or severe
+levels and preserves paired clean targets plus per-sample provenance.

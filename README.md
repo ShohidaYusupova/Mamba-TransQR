@@ -79,6 +79,19 @@ See [configs/dataset.yaml](configs/dataset.yaml) and
 [configs/augmentation.yaml](configs/augmentation.yaml) for reproducible
 configuration examples.
 
+## Synthetic QR dataset generation
+
+Install `python -m pip install -e ".[qr-generation]"`, then generate paired
+clean/damaged PNG data, metadata, manifests, and leakage-safe splits:
+
+```bash
+mambatransqr generate-dataset --config configs/dataset_generation.yaml --output datasets/synthetic_qr
+```
+
+The generator supports QR versions 1--40, L/M/Q/H correction, numeric,
+alphanumeric, byte, and URL payloads. Each payload is assigned to exactly one
+train/validation/test split, preventing payload leakage across severity variants.
+
 ## Training
 
 Build the model and use the trainer with a paired image loader that yields

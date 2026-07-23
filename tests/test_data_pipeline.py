@@ -20,7 +20,14 @@ from mambatransqr.data.augmentations import (
 )
 from mambatransqr.data.collate import qr_collate
 from mambatransqr.data.damage_generator import QRDamageGenerator
+from mambatransqr.data.dataset_builder import (
+    DatasetGenerationConfig,
+    SyntheticQRDatasetBuilder,
+    validate_dataset,
+)
 from mambatransqr.data.qr_degradation import QRDegradationEngine
+from mambatransqr.data.qr_generator import QRGenerationSpec, QRGenerator
+from mambatransqr.data.splits import split_payloads
 from mambatransqr.data.dataset import QRDataset, split_paths
 from mambatransqr.data.sampler import EpochSampler
 
@@ -92,6 +99,75 @@ def test_qr_degradation_rejects_non_square_images() -> None:
     """Module-grid corruption rejects images that cannot represent square QR codes."""
     with pytest.raises(ValueError, match="square"):
         QRDegradationEngine().degrade(Image.new("RGB", (32, 24), "white"))
+
+
+def test_payload_splits_are_deterministic_and_do_not_leak() -> None:
+    """All variants of one payload stay in one reproducible split."""
+    payloads = ["same", "same", "other", "third"]
+    first = split_payloads(payloads, seed=8)
+    assert first == split_payloads(payloads, seed=8)
+    assert first["same"] in {"train", "validation", "test"}
+
+
+@pytest.mark.parametrize("level", ("L", "M", "Q", "H"))
+def test_qr_generator_supports_all_error_correction_levels(level: str) -> None:
+    """Renderer accepts all standard correction levels when qrcode is installed."""
+    pytest.importorskip("qrcode")
+    image = QRGenerator.render(
+        QRGenerationSpec(1, level, "numeric", "123", 64)
+    )
+    assert image.size == (64, 64)
+
+
+@pytest.mark.parametrize("version", (1, 10, 40))
+def test_qr_generator_supports_multiple_versions(version: int) -> None:
+    """Renderer accepts QR versions across the standard 1--40 range."""
+    pytest.importorskip("qrcode")
+    image = QRGenerator.render(
+        QRGenerationSpec(version, "L", "numeric", "123", 64)
+    )
+    assert image.size == (64, 64)
+
+
+def test_synthetic_builder_creates_pairs_metadata_and_validates(tmp_path: Path) -> None:
+    """Builder emits paired PNGs, complete metadata, and a valid manifest."""
+    pytest.importorskip("qrcode")
+    config = DatasetGenerationConfig(
+        samples=3,
+        seed=3,
+        versions=(1,),
+        error_correction_levels=("L",),
+        payload_types=("numeric",),
+        payload_length=3,
+        image_size=64,
+        severities=("mild",),
+    )
+    records = SyntheticQRDatasetBuilder(config).build(tmp_path)
+    assert len(records) == 3
+    assert (tmp_path / "dataset_manifest.csv").is_file()
+    assert validate_dataset(tmp_path)["records"] == 3
+    record = records[0]
+    assert record.sample_id and record.damaged_image_path is not None
+    assert (tmp_path / record.clean_image_path).is_file()
+    assert (tmp_path / record.damaged_image_path).is_file()
+
+
+def test_synthetic_builder_is_deterministic(tmp_path: Path) -> None:
+    """A fixed seed produces the same payloads, QR settings, and split mapping."""
+    pytest.importorskip("qrcode")
+    config = DatasetGenerationConfig(
+        samples=2,
+        seed=13,
+        versions=(1,),
+        error_correction_levels=("L",),
+        payload_types=("numeric",),
+        payload_length=3,
+        image_size=64,
+        severities=("mild",),
+    )
+    first = SyntheticQRDatasetBuilder(config).build(tmp_path / "first")
+    second = SyntheticQRDatasetBuilder(config).build(tmp_path / "second")
+    assert [record.to_dict() for record in first] == [record.to_dict() for record in second]
 
 
 def test_dataset_discovers_images_and_matches_targets(tmp_path: Path) -> None:
