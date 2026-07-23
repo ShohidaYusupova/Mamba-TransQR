@@ -59,6 +59,42 @@ See [configs/dataset.yaml](configs/dataset.yaml) and
 [configs/augmentation.yaml](configs/augmentation.yaml) for reproducible
 configuration examples.
 
+## Training
+
+Build the model and use the trainer with a paired image loader that yields
+`{"image": tensor, "target": tensor}` batches. Checkpoints are written after
+every epoch as `latest.pt`, and the best monitored validation result is saved as
+`best.pt`.
+
+```python
+import torch
+
+from mambatransqr.models import ModelConfig, build_model
+from mambatransqr.training import (
+    CSVLogger,
+    LossManager,
+    OptimizerFactory,
+    Trainer,
+    TrainerConfig,
+)
+
+model = build_model(ModelConfig(image_size=256, patch_size=16))
+optimizer = OptimizerFactory.create(model.parameters())
+trainer = Trainer(
+    model,
+    optimizer,
+    LossManager({"mse": torch.nn.MSELoss()}),
+    TrainerConfig(epochs=100, checkpoint_dir="checkpoints"),
+    loggers=[CSVLogger("runs/metrics.csv")],
+)
+history = trainer.fit(train_loader, validation_loader)
+
+# Resume from a prior checkpoint.
+trainer.fit(train_loader, validation_loader, resume_from="checkpoints/latest.pt")
+```
+
+Use [configs/training.yaml](configs/training.yaml) as a starting configuration.
+
 ## Project layout
 
 ```text

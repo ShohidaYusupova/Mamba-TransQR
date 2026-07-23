@@ -24,6 +24,7 @@ dependencies = ["numpy>=1.26", "Pillow>=10.0", "torch>=2.4", "torchvision>=0.19"
 
 [project.optional-dependencies]
 dev = ["black>=24.10", "mypy>=1.13", "pytest>=8.3", "pytest-cov>=6.0", "ruff>=0.8"]
+tensorboard = ["tensorboard>=2.14"]
 
 [project.urls]
 Homepage = "https://github.com/your-org/Mamba-TransQR"
