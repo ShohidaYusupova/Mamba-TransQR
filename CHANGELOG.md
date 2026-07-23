@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   and experiment-management frameworks.
 - Official `mamba-ssm` Mamba backend with configurable state, convolution, and
   expansion settings, plus backend identity in checkpoints and reports.
+- Module-aware QR degradation engine for dropout, occlusion, finder-pattern,
+  ink-spread, and print/scan corruption with reproducible provenance.
 
 ### Changed
 

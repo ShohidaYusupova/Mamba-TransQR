@@ -135,9 +135,9 @@ in checkpoints and report artifacts.
 ### Data and QR restoration
 
 The data package discovers generic image files, supplies PIL/NumPy
-augmentations, and contains a synthetic damage generator for scratches, missing
-blocks, blur, illumination, noise, and JPEG artifacts. It does not include QR
-generation, QR content/metadata labels, dataset download/validation,
+augmentations, a generic synthetic damage generator, and a module-aware QR
+degradation engine for module dropout, occlusion, finder damage, ink spread,
+and print/scan artifacts. It does not include QR generation, QR content/metadata labels, dataset download/validation,
 reproducible split manifests, or verified target-pair management beyond relative
 path matching.
 

@@ -2,6 +2,7 @@
 
 from mambatransqr.data.collate import qr_collate
 from mambatransqr.data.damage_generator import QRDamageGenerator
+from mambatransqr.data.qr_degradation import QRDegradationEngine, QRDegradationResult
 from mambatransqr.data.datamodule import QRDataModule
 from mambatransqr.data.dataset import (
     BaseDataset,
@@ -21,6 +22,8 @@ __all__ = [
     "BaseDataset",
     "EpochSampler",
     "QRDamageGenerator",
+    "QRDegradationEngine",
+    "QRDegradationResult",
     "QRDataModule",
     "QRDataset",
     "TestDataset",

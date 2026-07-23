@@ -34,3 +34,9 @@ damage_generator:
     - noise
     - compression_artifacts
   count: 2
+
+qr_degradation:
+  module_count: 21
+  quiet_zone_modules: 4
+  enabled: [module_dropout, module_occlusion, finder_damage, ink_spread, print_scan]
+  count: 2

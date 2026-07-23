@@ -6,7 +6,7 @@ from collections.abc import Callable
 from pathlib import Path
 
 import pytest
-from PIL import Image
+from PIL import Image, ImageChops
 
 from mambatransqr.data.augmentations import (
     GaussianBlur,
@@ -20,6 +20,7 @@ from mambatransqr.data.augmentations import (
 )
 from mambatransqr.data.collate import qr_collate
 from mambatransqr.data.damage_generator import QRDamageGenerator
+from mambatransqr.data.qr_degradation import QRDegradationEngine
 from mambatransqr.data.dataset import QRDataset, split_paths
 from mambatransqr.data.sampler import EpochSampler
 
@@ -61,6 +62,36 @@ def test_damage_generator_supports_all_named_operations(image: Image.Image) -> N
     for name in generator.available_damages():
         result = generator.apply(name, image)
         assert result.size == image.size
+
+
+def test_qr_degradation_engine_preserves_grid_and_records_operations() -> None:
+    """QR-specific degradations are module-aware and expose sampled provenance."""
+    image = Image.new("RGB", (116, 116), "white")
+    engine = QRDegradationEngine(
+        module_count=21,
+        quiet_zone_modules=4,
+        enabled=("module_dropout", "finder_damage"),
+        count=2,
+        seed=7,
+    )
+    result = engine.degrade(image)
+    assert result.image.size == image.size
+    assert set(result.operations) == {"finder_damage", "module_dropout"}
+    assert ImageChops.difference(result.image, image).getbbox() is not None
+
+
+@pytest.mark.parametrize("name", QRDegradationEngine.available_degradations())
+def test_qr_degradation_engine_supports_named_operations(name: str) -> None:
+    """Every QR-specific operation preserves the input raster dimensions."""
+    image = Image.new("RGB", (116, 116), "white")
+    engine = QRDegradationEngine(count=0, seed=1)
+    assert engine.apply(name, image).size == image.size
+
+
+def test_qr_degradation_rejects_non_square_images() -> None:
+    """Module-grid corruption rejects images that cannot represent square QR codes."""
+    with pytest.raises(ValueError, match="square"):
+        QRDegradationEngine().degrade(Image.new("RGB", (32, 24), "white"))
 
 
 def test_dataset_discovers_images_and_matches_targets(tmp_path: Path) -> None:

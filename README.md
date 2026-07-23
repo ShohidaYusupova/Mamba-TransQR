@@ -55,7 +55,7 @@ recursively. For paired restoration data, provide a matching `target_root`;
 each target must have the same relative path as its source image.
 
 ```python
-from mambatransqr.data import QRDataModule, QRDamageGenerator
+from mambatransqr.data import QRDataModule, QRDegradationEngine
 from mambatransqr.data.transforms import Compose, Resize, ToTensor
 
 train_transform = Compose([Resize((256, 256)), ToTensor()])
@@ -70,8 +70,9 @@ data = QRDataModule(
 data.setup()
 batch = next(iter(data.train_dataloader()))
 
-# Synthetic degradation can be used before the tensor transform.
-damaged_image = QRDamageGenerator(seed=7)(your_pil_image)
+# Module-aware QR degradation can be used before the tensor transform.
+degrader = QRDegradationEngine(module_count=21, quiet_zone_modules=4, seed=7)
+damaged_image = degrader(your_pil_image)
 ```
 
 See [configs/dataset.yaml](configs/dataset.yaml) and
