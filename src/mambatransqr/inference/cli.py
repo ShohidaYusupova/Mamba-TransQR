@@ -28,7 +28,9 @@ def main() -> None:
         )
         return
     if arguments.command == "train-qr":
-        print(f"QR restoration recipe: {arguments.config}")
+        from scripts.train_qr_restoration import run
+
+        run(arguments.config)
         return
     if arguments.command in {"benchmark", "paper-experiments"}:
         print(f"{arguments.command} recipe: {arguments.config}")

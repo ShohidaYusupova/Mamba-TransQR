@@ -1,16 +1,196 @@
-"""Entry point placeholder for reproducible QR restoration training recipes."""
+"""Run a reproducible paired QR restoration experiment from a YAML recipe."""
 
 from __future__ import annotations
 
 import argparse
+import csv
+import json
+import shutil
+import time
+from collections.abc import Iterable
+from dataclasses import asdict
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import torch
+import yaml
+from PIL import Image
+from torch.utils.data import Dataset
+
+from mambatransqr.data.loader import create_evaluation_dataloader, create_train_dataloader
+from mambatransqr.models import ModelConfig, build_model
+from mambatransqr.losses import MultiScaleRestorationLoss, QRLossWeights
+from mambatransqr.training import (
+    OptimizerConfig,
+    OptimizerFactory,
+    QRRestorationTrainer,
+    TensorBoardLogger,
+    TrainerConfig,
+)
+
+
+class PairedQRDataset(Dataset[dict[str, Any]]):
+    """Load paired images described by the generated QR metadata files."""
+
+    def __init__(self, root: Path, split: str) -> None:
+        self.root = root
+        self.records = [
+            json.loads(path.read_text(encoding="utf-8"))
+            for path in sorted((root / split / "metadata").glob("*.json"))
+        ]
+        if not self.records:
+            raise ValueError(f"no paired QR records found for split: {split}")
+
+    def __len__(self) -> int:
+        return len(self.records)
+
+    def __getitem__(self, index: int) -> dict[str, Any]:
+        record = self.records[index]
+        return {
+            "image": _load_tensor(self.root / record["damaged_image_path"]),
+            "target": _load_tensor(self.root / record["clean_image_path"]),
+            "metadata": record,
+        }
+
+
+def _load_tensor(path: Path) -> torch.Tensor:
+    with Image.open(path) as image:
+        pixels = np.asarray(image.convert("RGB"), dtype=np.float32).copy()
+    return torch.from_numpy(pixels).permute(2, 0, 1) / 255.0
+
+
+def _mean(rows: Iterable[dict[str, float]]) -> dict[str, float]:
+    totals: dict[str, float] = {}
+    count = 0
+    for row in rows:
+        count += 1
+        for key, value in row.items():
+            totals[key] = totals.get(key, 0.0) + value
+    if not count:
+        raise ValueError("training loader yielded no batches")
+    return {key: value / count for key, value in totals.items()}
+
+
+def _write_csv(path: Path, rows: list[dict[str, float]]) -> None:
+    if not rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def run(config_path: str | Path) -> dict[str, float]:
+    """Train, validate, checkpoint, and benchmark a QR restoration model."""
+    recipe = yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
+    dataset_root = Path(recipe["dataset"]["root"])
+    output_root = Path(recipe["output_dir"])
+    output_root.mkdir(parents=True, exist_ok=True)
+    checkpoint_dir = Path(recipe["trainer"]["checkpoint_dir"])
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    datasets = {
+        split: PairedQRDataset(dataset_root, split)
+        for split in ("train", "validation", "test")
+    }
+    batch_size = int(recipe["data_loader"]["batch_size"])
+    workers = int(recipe["data_loader"].get("num_workers", 0))
+    train_loader = create_train_dataloader(
+        datasets["train"], batch_size=batch_size, num_workers=workers
+    )
+    validation_loader = create_evaluation_dataloader(
+        datasets["validation"], batch_size=batch_size, num_workers=workers
+    )
+    test_loader = create_evaluation_dataloader(
+        datasets["test"], batch_size=batch_size, num_workers=workers
+    )
+
+    model = build_model(ModelConfig(**recipe["model"]))
+    optimizer = OptimizerFactory.create(
+        model.parameters(), OptimizerConfig(**recipe["optimizer"])
+    )
+    objective = MultiScaleRestorationLoss(QRLossWeights(**recipe.get("loss", {})))
+    trainer = QRRestorationTrainer(
+        model,
+        optimizer,
+        objective,
+        TrainerConfig(**recipe["trainer"]),
+        loggers=[TensorBoardLogger(output_root / "tensorboard")],
+    )
+
+    started = time.perf_counter()
+    training_rows: list[dict[str, float]] = []
+    validation_rows: list[dict[str, float]] = []
+    for epoch in range(1, trainer.config.epochs + 1):
+        train_metrics = _mean(trainer.train_batch(batch) for batch in train_loader)
+        trainer.state.global_step += len(train_loader)
+        if trainer.ema is not None:
+            trainer.ema.apply_to(trainer.model)
+        validation_metrics = trainer.validate_qr(validation_loader)
+        if trainer.ema is not None:
+            trainer.ema.restore(trainer.model)
+        metrics = {
+            **{f"train_{name}": value for name, value in train_metrics.items()},
+            **validation_metrics,
+        }
+        trainer.state.epoch = epoch
+        trainer.state.metrics = metrics
+        is_best = trainer._is_best(metrics)
+        if is_best:
+            trainer.state.best_metric = metrics[trainer.config.monitor]
+            trainer.state.best_epoch = epoch
+        trainer.checkpoints.save(
+            trainer.model,
+            trainer.optimizer,
+            trainer.state,
+            ema_state=trainer.ema.state_dict() if trainer.ema is not None else None,
+            reproducibility={"recipe": str(config_path), "model": asdict(model.config)},
+            is_best=is_best,
+        )
+        shutil.copy2(trainer.checkpoints.latest_path, checkpoint_dir / f"epoch_{epoch:03d}.pt")
+        for logger in trainer.loggers:
+            logger.log_metrics(metrics, trainer.state.global_step)
+        training_rows.append({"epoch": float(epoch), **train_metrics})
+        validation_rows.append({"epoch": float(epoch), **validation_metrics})
+        print(
+            f"epoch={epoch}/{trainer.config.epochs} "
+            f"loss={train_metrics['loss']:.6f} "
+            f"val_psnr={validation_metrics['val_psnr']:.4f} "
+            f"val_ssim={validation_metrics['val_ssim']:.6f}",
+            flush=True,
+        )
+    for logger in trainer.loggers:
+        logger.close()
+
+    if trainer.ema is not None:
+        trainer.ema.apply_to(trainer.model)
+    test_metrics = trainer.validate_qr(test_loader)
+    if trainer.ema is not None:
+        trainer.ema.restore(trainer.model)
+    runtime_seconds = time.perf_counter() - started
+    _write_csv(output_root / "training_history.csv", training_rows)
+    _write_csv(output_root / "validation_history.csv", validation_rows)
+    benchmark = {
+        "model": "mamba_transqr_lightweight",
+        "test_psnr": test_metrics["val_psnr"],
+        "test_ssim": test_metrics["val_ssim"],
+        "runtime_seconds": runtime_seconds,
+    }
+    with (output_root / "benchmark_summary.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(benchmark))
+        writer.writeheader()
+        writer.writerow(benchmark)
+    return {key: float(value) for key, value in benchmark.items() if key != "model"}
 
 
 def main() -> None:
-    """Validate the recipe path; applications provide their dataset loaders."""
     parser = argparse.ArgumentParser(prog="train_qr_restoration")
-    parser.add_argument("--config", required=True)
-    args = parser.parse_args()
-    print(f"QR restoration recipe: {args.config}")
+    parser.add_argument("--config", type=Path, required=True)
+    print(run(parser.parse_args().config))
 
 
 if __name__ == "__main__":

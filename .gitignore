@@ -37,4 +37,5 @@ Thumbs.db
 # Generated research data and runtime outputs
 datasets/
 results/
+checkpoints/
 .pytest-temp/
