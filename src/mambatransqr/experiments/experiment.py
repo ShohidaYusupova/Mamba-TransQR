@@ -60,9 +60,7 @@ def _architecture_identity(config: dict[str, Any]) -> dict[str, str | None]:
         implementation = (
             "official_mamba_ssm"
             if backend == "mamba_ssm"
-            else "lightweight_state_space"
-            if backend == "lightweight"
-            else None
+            else "lightweight_state_space" if backend == "lightweight" else None
         )
     package_version = model.get("mamba_ssm_version")
     if package_version is None and backend == "mamba_ssm":

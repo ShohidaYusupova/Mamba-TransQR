@@ -109,9 +109,9 @@ class CheckpointManager:
         if scheduler is not None and payload.get("scheduler") is not None:
             scheduler.load_state_dict(payload["scheduler"])
         ema = payload.get("ema")
-        return TrainingState.from_dict(payload["state"]), ema if isinstance(
-            ema, dict
-        ) else None
+        return TrainingState.from_dict(payload["state"]), (
+            ema if isinstance(ema, dict) else None
+        )
 
     def _atomic_save(self, payload: dict[str, Any], path: Path) -> None:
         """Write a checkpoint atomically to reduce corruption risk."""

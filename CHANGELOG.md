@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   metadata, integrity validation, and dataset manifests.
 - QR-specific multi-scale restoration objective and reproducibility recipe.
 - Reproducible benchmark registry, measured-result reporting, tables, and figures.
+- CPU-only full-pipeline smoke validation.
 
 ### Changed
 

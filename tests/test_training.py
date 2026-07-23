@@ -8,6 +8,7 @@ import pytest
 
 torch = pytest.importorskip("torch")
 
+from mambatransqr.models import ModelConfig, build_model  # noqa: E402
 from mambatransqr.training import (  # noqa: E402
     CheckpointManager,
     CSVLogger,
@@ -20,7 +21,6 @@ from mambatransqr.training import (  # noqa: E402
     TrainerConfig,
     TrainingState,
 )
-from mambatransqr.models import ModelConfig, build_model  # noqa: E402
 
 
 def _batches() -> list[dict[str, object]]:

@@ -32,12 +32,16 @@ class QRMetadata:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, value: dict[str, Any]) -> "QRMetadata":
+    def from_dict(cls, value: dict[str, Any]) -> QRMetadata:
         """Validate and reconstruct persisted metadata."""
         required = {field.name for field in cls.__dataclass_fields__.values()}
         missing = required - set(value)
         if missing:
             raise ValueError(f"metadata missing fields: {sorted(missing)}")
         return cls(
-            **{**value, "image_dimensions": tuple(value["image_dimensions"]), "degradation_operators": tuple(value["degradation_operators"])}
+            **{
+                **value,
+                "image_dimensions": tuple(value["image_dimensions"]),
+                "degradation_operators": tuple(value["degradation_operators"]),
+            }
         )

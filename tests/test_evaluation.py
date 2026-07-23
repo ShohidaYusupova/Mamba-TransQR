@@ -77,7 +77,9 @@ def test_reports_are_written(tmp_path: Path) -> None:
         },
     ).is_file()
     payload = __import__("json").loads((tmp_path / "evaluation.json").read_text())
-    assert set(("mamba_backend", "mamba_implementation", "mamba_ssm_version")) <= set(payload)
+    assert set(("mamba_backend", "mamba_implementation", "mamba_ssm_version")) <= set(
+        payload
+    )
 
 
 def test_statistics_summary_has_expected_mean() -> None:

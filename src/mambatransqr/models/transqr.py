@@ -114,8 +114,8 @@ class MambaTransQR(nn.Module):
         official_mamba_modules = {
             id(child)
             for block in self.encoder.blocks
-            if block.mamba.backend == "mamba_ssm"
-            for child in block.mamba.implementation.modules()
+            if getattr(block.mamba, "backend", None) == "mamba_ssm"
+            for child in block.mamba.implementation.modules()  # type: ignore[union-attr]
         }
         for module in self.modules():
             if id(module) not in official_mamba_modules:

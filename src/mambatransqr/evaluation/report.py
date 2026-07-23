@@ -21,7 +21,9 @@ class ReportGenerator:
         """Write a JSON evaluation report and return its path."""
         destination = _prepare(path)
         destination.write_text(
-            json.dumps(_with_architecture(metrics, architecture), indent=2, sort_keys=True),
+            json.dumps(
+                _with_architecture(metrics, architecture), indent=2, sort_keys=True
+            ),
             encoding="utf-8",
         )
         return destination

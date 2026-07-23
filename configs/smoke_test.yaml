@@ -1,0 +1,6 @@
+seed: 42
+image_size: 16
+batch_size: 1
+epochs: 1
+output: results/smoke_test
+mamba_backend: lightweight

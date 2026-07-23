@@ -20,6 +20,7 @@ from mambatransqr.data.augmentations import (
 )
 from mambatransqr.data.collate import qr_collate
 from mambatransqr.data.damage_generator import QRDamageGenerator
+from mambatransqr.data.dataset import QRDataset, split_paths
 from mambatransqr.data.dataset_builder import (
     DatasetGenerationConfig,
     SyntheticQRDatasetBuilder,
@@ -27,9 +28,8 @@ from mambatransqr.data.dataset_builder import (
 )
 from mambatransqr.data.qr_degradation import QRDegradationEngine
 from mambatransqr.data.qr_generator import QRGenerationSpec, QRGenerator
-from mambatransqr.data.splits import split_payloads
-from mambatransqr.data.dataset import QRDataset, split_paths
 from mambatransqr.data.sampler import EpochSampler
+from mambatransqr.data.splits import split_payloads
 
 
 @pytest.fixture
@@ -113,9 +113,7 @@ def test_payload_splits_are_deterministic_and_do_not_leak() -> None:
 def test_qr_generator_supports_all_error_correction_levels(level: str) -> None:
     """Renderer accepts all standard correction levels when qrcode is installed."""
     pytest.importorskip("qrcode")
-    image = QRGenerator.render(
-        QRGenerationSpec(1, level, "numeric", "123", 64)
-    )
+    image = QRGenerator.render(QRGenerationSpec(1, level, "numeric", "123", 64))
     assert image.size == (64, 64)
 
 
@@ -123,9 +121,7 @@ def test_qr_generator_supports_all_error_correction_levels(level: str) -> None:
 def test_qr_generator_supports_multiple_versions(version: int) -> None:
     """Renderer accepts QR versions across the standard 1--40 range."""
     pytest.importorskip("qrcode")
-    image = QRGenerator.render(
-        QRGenerationSpec(version, "L", "numeric", "123", 64)
-    )
+    image = QRGenerator.render(QRGenerationSpec(version, "L", "numeric", "123", 64))
     assert image.size == (64, 64)
 
 
@@ -167,7 +163,9 @@ def test_synthetic_builder_is_deterministic(tmp_path: Path) -> None:
     )
     first = SyntheticQRDatasetBuilder(config).build(tmp_path / "first")
     second = SyntheticQRDatasetBuilder(config).build(tmp_path / "second")
-    assert [record.to_dict() for record in first] == [record.to_dict() for record in second]
+    assert [record.to_dict() for record in first] == [
+        record.to_dict() for record in second
+    ]
 
 
 def test_dataset_discovers_images_and_matches_targets(tmp_path: Path) -> None:

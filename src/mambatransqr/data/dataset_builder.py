@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import csv
 import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from random import Random
@@ -14,7 +14,11 @@ from PIL import Image
 
 from mambatransqr.data.metadata import QRMetadata
 from mambatransqr.data.qr_degradation import QRDegradationEngine
-from mambatransqr.data.qr_generator import QRGenerationSpec, QRGenerator, decode_readability
+from mambatransqr.data.qr_generator import (
+    QRGenerationSpec,
+    QRGenerator,
+    decode_readability,
+)
 from mambatransqr.data.splits import split_payloads
 
 
@@ -70,7 +74,9 @@ class SyntheticQRDatasetBuilder:
                 except ValueError:
                     continue
             else:
-                raise ValueError("unable to generate a payload fitting the configured QR set")
+                raise ValueError(
+                    "unable to generate a payload fitting the configured QR set"
+                )
         assignments = split_payloads(
             [spec.payload for _, spec, _, _ in plans],
             self.config.seed,
@@ -86,7 +92,9 @@ class SyntheticQRDatasetBuilder:
                 engine = self._degrader(spec.version, spec.border, severity, seed)
                 degraded = engine.degrade(clean)
                 sample_id = f"qr_{index:06d}_{severity}"
-                damaged_relative = Path(split) / "damaged" / severity / f"{sample_id}.png"
+                damaged_relative = (
+                    Path(split) / "damaged" / severity / f"{sample_id}.png"
+                )
                 self._save(degraded.image, root / damaged_relative)
                 record = QRMetadata(
                     sample_id=sample_id,
@@ -112,7 +120,9 @@ class SyntheticQRDatasetBuilder:
                     ),
                     split=split,
                 )
-                self._write_metadata(root / split / "metadata" / f"{sample_id}.json", record)
+                self._write_metadata(
+                    root / split / "metadata" / f"{sample_id}.json", record
+                )
                 records.append(record)
         self._write_artifacts(root, records)
         validate_dataset(root)
@@ -124,7 +134,9 @@ class SyntheticQRDatasetBuilder:
             version=version,
             error_correction=rng.choice(self.config.error_correction_levels),
             payload_type=payload_type,
-            payload=QRGenerator.make_payload(payload_type, self.config.payload_length, rng),
+            payload=QRGenerator.make_payload(
+                payload_type, self.config.payload_length, rng
+            ),
             image_size=self.config.image_size,
             border=self.config.border,
             foreground=self.config.foreground,
@@ -139,7 +151,9 @@ class SyntheticQRDatasetBuilder:
     @staticmethod
     def _write_metadata(path: Path, record: QRMetadata) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(record.to_dict(), indent=2, sort_keys=True), encoding="utf-8")
+        path.write_text(
+            json.dumps(record.to_dict(), indent=2, sort_keys=True), encoding="utf-8"
+        )
 
     @staticmethod
     def _degrader(
@@ -164,14 +178,37 @@ class SyntheticQRDatasetBuilder:
 
     def _write_artifacts(self, root: Path, records: list[QRMetadata]) -> None:
         rows = [record.to_dict() for record in records]
-        with (root / "dataset_manifest.csv").open("w", newline="", encoding="utf-8") as stream:
+        with (root / "dataset_manifest.csv").open(
+            "w", newline="", encoding="utf-8"
+        ) as stream:
             writer = csv.DictWriter(stream, fieldnames=sorted(rows[0]))
             writer.writeheader()
             writer.writerows(rows)
-        split_counts = {name: sum(item.split == name for item in records) for name in ("train", "validation", "test")}
-        payload_counts = {name: len({item.payload for item in records if item.split == name}) for name in split_counts}
-        (root / "dataset_summary.json").write_text(json.dumps({"samples": len(records), "seed": self.config.seed, "severities": self.config.severities}, indent=2), encoding="utf-8")
-        (root / "split_statistics.json").write_text(json.dumps({"samples": split_counts, "unique_payloads": payload_counts}, indent=2), encoding="utf-8")
+        split_counts = {
+            name: sum(item.split == name for item in records)
+            for name in ("train", "validation", "test")
+        }
+        payload_counts = {
+            name: len({item.payload for item in records if item.split == name})
+            for name in split_counts
+        }
+        (root / "dataset_summary.json").write_text(
+            json.dumps(
+                {
+                    "samples": len(records),
+                    "seed": self.config.seed,
+                    "severities": self.config.severities,
+                },
+                indent=2,
+            ),
+            encoding="utf-8",
+        )
+        (root / "split_statistics.json").write_text(
+            json.dumps(
+                {"samples": split_counts, "unique_payloads": payload_counts}, indent=2
+            ),
+            encoding="utf-8",
+        )
 
 
 def validate_dataset(root: str | Path) -> dict[str, int]:
@@ -183,7 +220,9 @@ def validate_dataset(root: str | Path) -> dict[str, int]:
     records: list[QRMetadata] = []
     for path in paths:
         try:
-            records.append(QRMetadata.from_dict(json.loads(path.read_text(encoding="utf-8"))))
+            records.append(
+                QRMetadata.from_dict(json.loads(path.read_text(encoding="utf-8")))
+            )
         except (OSError, ValueError, TypeError, json.JSONDecodeError) as error:
             raise DatasetIntegrityError(f"invalid metadata: {path}") from error
     ids = [record.sample_id for record in records]
@@ -196,17 +235,25 @@ def validate_dataset(root: str | Path) -> dict[str, int]:
         dimensions: list[tuple[int, int]] = []
         for relative in (record.clean_image_path, record.damaged_image_path):
             if relative is None or not (directory / relative).is_file():
-                raise DatasetIntegrityError(f"missing paired image for {record.sample_id}")
+                raise DatasetIntegrityError(
+                    f"missing paired image for {record.sample_id}"
+                )
             try:
                 with Image.open(directory / relative) as image:
                     if image.size != record.image_dimensions:
-                        raise DatasetIntegrityError(f"clean/damaged pair mismatch for {record.sample_id}")
+                        raise DatasetIntegrityError(
+                            f"clean/damaged pair mismatch for {record.sample_id}"
+                        )
                     dimensions.append(image.size)
                     image.verify()
             except (OSError, ValueError) as error:
-                raise DatasetIntegrityError(f"corrupt image for {record.sample_id}") from error
+                raise DatasetIntegrityError(
+                    f"corrupt image for {record.sample_id}"
+                ) from error
         if len(dimensions) != 2 or dimensions[0] != dimensions[1]:
-            raise DatasetIntegrityError(f"clean/damaged pair mismatch for {record.sample_id}")
+            raise DatasetIntegrityError(
+                f"clean/damaged pair mismatch for {record.sample_id}"
+            )
     return {"records": len(records), "payloads": len(ownership)}
 
 
@@ -217,7 +264,7 @@ def load_generation_config(path: str | Path) -> DatasetGenerationConfig:
     except ImportError as error:
         raise ImportError(
             "YAML dataset configuration requires PyYAML. Install with "
-            "`pip install -e \".[qr-generation]\"`."
+            '`pip install -e ".[qr-generation]"`.'
         ) from error
     value: dict[str, Any] = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     for name in (

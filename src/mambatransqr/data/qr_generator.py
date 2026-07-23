@@ -47,7 +47,9 @@ class QRGenerator:
             alphabet = ascii_uppercase + ascii_uppercase.lower() + digits + "-_"
             return "".join(rng.choice(alphabet) for _ in range(length))
         if payload_type == "url":
-            suffix = "".join(rng.choice(ascii_uppercase.lower() + digits) for _ in range(length))
+            suffix = "".join(
+                rng.choice(ascii_uppercase.lower() + digits) for _ in range(length)
+            )
             return f"https://example.test/{suffix}"
         raise ValueError(f"unsupported payload type: {payload_type}")
 
@@ -67,7 +69,7 @@ class QRGenerator:
         except ImportError as error:
             raise OptionalQRDependencyError(
                 "QR generation requires the optional qrcode package. Install with "
-                "`pip install -e \".[qr-generation]\"`."
+                '`pip install -e ".[qr-generation]"`.'
             ) from error
         levels = {
             "L": qrcode.constants.ERROR_CORRECT_L,
@@ -105,6 +107,6 @@ def decode_readability(image: Image.Image, backend: str | None = None) -> bool |
     except ImportError as error:
         raise OptionalQRDependencyError(
             "QR readability checks require pyzbar. Install with "
-            "`pip install -e \".[qr-decode]\"`."
+            '`pip install -e ".[qr-decode]"`.'
         ) from error
     return bool(decode(image))

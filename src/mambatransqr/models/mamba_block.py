@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import warnings
 from importlib.metadata import PackageNotFoundError, version
 from typing import Literal
-import warnings
 
 import torch
 from torch import Tensor, nn
@@ -121,7 +121,7 @@ class MambaBlock(nn.Module):
         except ImportError as error:
             raise OptionalDependencyError(
                 "backend='mamba_ssm' requires the optional mamba-ssm package. "
-                "Install it with `pip install -e \".[mamba]\"` on a supported "
+                'Install it with `pip install -e ".[mamba]"` on a supported '
                 "Linux/NVIDIA CUDA environment. No lightweight fallback is used."
             ) from error
         self.norm = nn.LayerNorm(embed_dim)

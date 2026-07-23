@@ -40,6 +40,8 @@ with the configured output channels.
 
 ## Development
 
+Run the CPU-only end-to-end validation with `mambatransqr smoke-test`.
+
 ```bash
 ruff check .
 black --check .

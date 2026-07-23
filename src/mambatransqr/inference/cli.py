@@ -33,6 +33,11 @@ def main() -> None:
     if arguments.command in {"benchmark", "paper-experiments"}:
         print(f"{arguments.command} recipe: {arguments.config}")
         return
+    if arguments.command == "smoke-test":
+        from scripts.run_full_smoke_test import run
+
+        run(arguments.output)
+        return
     config = ModelConfig(image_size=arguments.image_size)
     predictor = Predictor(
         config=config,
@@ -98,5 +103,8 @@ def _parser() -> argparse.ArgumentParser:
     train_qr = subcommands.add_parser("train-qr")
     train_qr.add_argument("--config", type=Path, required=True)
     for name in ("benchmark", "paper-experiments"):
-        command = subcommands.add_parser(name); command.add_argument("--config", type=Path, required=True)
+        command = subcommands.add_parser(name)
+        command.add_argument("--config", type=Path, required=True)
+    smoke = subcommands.add_parser("smoke-test")
+    smoke.add_argument("--output", type=Path, default=Path("results/smoke_test"))
     return parser

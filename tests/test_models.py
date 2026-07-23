@@ -50,8 +50,9 @@ def test_patch_embedding_returns_expected_token_shape() -> None:
     [LearnablePositionalEncoding, SinusoidalPositionalEncoding],
 )
 def test_positional_encoding_preserves_token_shape(
-    encoding_type: type[LearnablePositionalEncoding]
-    | type[SinusoidalPositionalEncoding],
+    encoding_type: (
+        type[LearnablePositionalEncoding] | type[SinusoidalPositionalEncoding]
+    ),
 ) -> None:
     """Both positional encodings preserve the token tensor shape."""
     encoding = encoding_type(16, 12, 0.0)

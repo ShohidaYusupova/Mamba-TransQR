@@ -39,4 +39,6 @@ def test_weighted_multiscale_loss_forwards_and_backwards() -> None:
     objective = MultiScaleRestorationLoss()
     loss = objective(prediction, target, [{"qr_version": 1}])
     loss.backward()
-    assert loss.ndim == 0 and {"structure", "decode_consistency"} <= set(objective.last_components)
+    assert loss.ndim == 0 and {"structure", "decode_consistency"} <= set(
+        objective.last_components
+    )
