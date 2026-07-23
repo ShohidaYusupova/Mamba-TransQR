@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use Mamba-TransQR in your research, please cite it using this metadata."
+title: "Mamba-TransQR"
+type: software
+version: 0.1.0
+date-released: 2026-07-23
+license: MIT
+authors:
+  - name: "Mamba-TransQR Contributors"
+repository-code: "https://github.com/your-org/Mamba-TransQR"
