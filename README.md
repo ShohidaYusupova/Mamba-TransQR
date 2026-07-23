@@ -28,6 +28,37 @@ mypy src tests
 pytest
 ```
 
+## Dataset usage
+
+Place input QR images in split directories (for example,
+`data/train`, `data/validation`, and `data/test`). Image files are discovered
+recursively. For paired restoration data, provide a matching `target_root`;
+each target must have the same relative path as its source image.
+
+```python
+from mambatransqr.data import QRDataModule, QRDamageGenerator
+from mambatransqr.data.transforms import Compose, Resize, ToTensor
+
+train_transform = Compose([Resize((256, 256)), ToTensor()])
+data = QRDataModule(
+    train_dir="data/train",
+    validation_dir="data/validation",
+    test_dir="data/test",
+    batch_size=32,
+    train_transform=train_transform,
+    evaluation_transform=train_transform,
+)
+data.setup()
+batch = next(iter(data.train_dataloader()))
+
+# Synthetic degradation can be used before the tensor transform.
+damaged_image = QRDamageGenerator(seed=7)(your_pil_image)
+```
+
+See [configs/dataset.yaml](configs/dataset.yaml) and
+[configs/augmentation.yaml](configs/augmentation.yaml) for reproducible
+configuration examples.
+
 ## Project layout
 
 ```text

@@ -1,0 +1,36 @@
+# Augmentation settings. Apply transforms in the listed order.
+transforms:
+  - name: Resize
+    size: [256, 256]
+  - name: RandomHorizontalFlip
+    probability: 0.5
+  - name: ToTensor
+  - name: Normalize
+    mean: [0.5, 0.5, 0.5]
+    std: [0.5, 0.5, 0.5]
+
+augmentations:
+  gaussian_noise:
+    std: 10.0
+  gaussian_blur:
+    radius: 1.0
+  jpeg_compression:
+    quality: 50
+  perspective_transform:
+    distortion_scale: 0.1
+  random_shadow:
+    opacity: 0.4
+  random_rain:
+    density: 3.0
+  random_occlusion:
+    max_fraction: 0.2
+
+damage_generator:
+  enabled:
+    - scratches
+    - missing_blocks
+    - blur
+    - low_illumination
+    - noise
+    - compression_artifacts
+  count: 2

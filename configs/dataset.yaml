@@ -1,0 +1,13 @@
+# Dataset and DataLoader settings for Mamba-TransQR.
+dataset:
+  train_dir: data/train
+  validation_dir: data/validation
+  test_dir: data/test
+  target_root: null
+  extensions: [".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".webp"]
+
+loader:
+  batch_size: 32
+  num_workers: 4
+  pin_memory: true
+  drop_last: false
