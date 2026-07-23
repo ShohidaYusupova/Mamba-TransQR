@@ -1,0 +1,4 @@
+losses:
+  reconstruction: {type: l1, weight: 1.0}
+  ssim: {weight: 0.2}
+  edge: {weight: 0.1}

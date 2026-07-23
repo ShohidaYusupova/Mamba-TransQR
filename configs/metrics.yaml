@@ -1,0 +1,4 @@
+metrics:
+  image: [psnr, ssim]
+  classification: [accuracy, top1, top5]
+  binary: [precision, recall, f1, iou]

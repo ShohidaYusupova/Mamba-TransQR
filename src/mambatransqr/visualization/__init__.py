@@ -1,1 +1,5 @@
 """Visualization helpers."""
+
+from mambatransqr.visualization.training_curves import plot_training_curves
+
+__all__ = ["plot_training_curves"]
