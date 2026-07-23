@@ -1,0 +1,35 @@
+# Phase 1 pilot: bounded output and pixel-first loss rebalancing only.
+dataset:
+  root: datasets/first_real_qr_10k
+data_loader:
+  batch_size: 16
+  num_workers: 0
+model:
+  image_size: 128
+  patch_size: 16
+  embed_dim: 64
+  depth: 4
+  num_heads: 4
+  dropout: 0.0
+  drop_path_rate: 0.0
+  mamba_backend: lightweight
+trainer:
+  epochs: 10
+  device: cpu
+  seed: 42
+  mixed_precision: false
+  use_ema: true
+  checkpoint_dir: checkpoints/phase1_pilot
+  monitor: val_psnr
+  monitor_mode: max
+optimizer:
+  name: adamw
+  learning_rate: 0.0002
+  weight_decay: 0.0001
+loss:
+  reconstruction_weight: 1.0
+  ssim_weight: 0.1
+  edge_weight: 0.05
+  structure_weight: 0.1
+  decode_consistency_weight: 0.05
+output_dir: results/phase1_pilot

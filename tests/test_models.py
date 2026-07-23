@@ -135,10 +135,11 @@ def test_transformer_block_has_residual_shape() -> None:
 
 
 def test_model_reconstructs_configured_image_shape(config: ModelConfig) -> None:
-    """Full model reconstruction matches its configured image dimensions."""
+    """Full model reconstruction has the configured image shape and range."""
     model = build_model(config)
     output = model(torch.randn(2, 3, 32, 32))
     assert output.shape == (2, 3, 32, 32)
+    assert torch.all((0 <= output) & (output <= 1))
 
 
 def test_model_summary_counts_trainable_parameters(config: ModelConfig) -> None:

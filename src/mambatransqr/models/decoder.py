@@ -74,9 +74,10 @@ class Decoder(nn.Module):
             patch_height,
             patch_width,
         )
-        return patches.permute(0, 3, 1, 4, 2, 5).reshape(
+        logits = patches.permute(0, 3, 1, 4, 2, 5).reshape(
             batch_size,
             self.out_channels,
             self.image_size[0],
             self.image_size[1],
         )
+        return logits.sigmoid()
