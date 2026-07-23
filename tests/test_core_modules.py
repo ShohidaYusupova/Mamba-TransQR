@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -36,7 +37,16 @@ def test_metrics_manager_scores_identical_images() -> None:
 
 def test_experiment_creates_logs_and_summary(tmp_path: Path) -> None:
     """Experiment creates automatic directories and output artifacts."""
-    experiment = Experiment("unit", tmp_path, {"seed": 1})
+    experiment = Experiment(
+        "unit",
+        tmp_path,
+        {"seed": 1, "model": {"mamba_backend": "lightweight"}},
+    )
     experiment.log({"loss": 1.0}, 1)
-    assert experiment.summary({"ok": True}).is_file()
+    summary = experiment.summary({"ok": True})
+    assert summary.is_file()
+    assert (
+        json.loads(summary.read_text())["mamba_implementation"]
+        == "lightweight_state_space"
+    )
     assert (experiment.directory / "metrics.csv").is_file()

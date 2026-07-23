@@ -54,7 +54,7 @@ class InferencePipeline:
         """
         directory = Path(output_dir)
         directory.mkdir(parents=True, exist_ok=True)
-        records = [result.to_dict() for result in results]
+        records = [_with_architecture(result.to_dict()) for result in results]
         json_path = directory / "predictions.json"
         json_path.write_text(json.dumps(records, indent=2), encoding="utf-8")
         csv_path = directory / "predictions.csv"
@@ -64,3 +64,15 @@ class InferencePipeline:
             writer.writeheader()
             writer.writerows(records)
         return json_path, csv_path
+
+
+def _with_architecture(record: dict[str, object]) -> dict[str, object]:
+    """Promote mandatory Mamba identity fields into each inference report row."""
+    metadata = record.get("metadata")
+    metadata = metadata if isinstance(metadata, dict) else {}
+    return {
+        **record,
+        "mamba_backend": metadata.get("mamba_backend"),
+        "mamba_implementation": metadata.get("mamba_implementation"),
+        "mamba_ssm_version": metadata.get("mamba_ssm_version"),
+    }

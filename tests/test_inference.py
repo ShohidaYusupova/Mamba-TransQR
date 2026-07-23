@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -49,15 +50,23 @@ def test_predictor_runs_single_image_on_cpu() -> None:
     ).predict_image(Image.new("RGB", (16, 16), "white"))
     assert restored.size == (16, 16)
     assert result.latency_ms >= 0
+    assert result.metadata["mamba_backend"] == "lightweight"
 
 
 def test_pipeline_writes_json_and_csv_reports(tmp_path: Path) -> None:
     """Pipeline report writer emits both requested report formats."""
-    json_path, csv_path = InferencePipeline.write_reports(
-        [PredictionResult()], tmp_path
+    result = PredictionResult(
+        metadata={
+            "mamba_backend": "lightweight",
+            "mamba_implementation": "lightweight_state_space",
+            "mamba_ssm_version": None,
+        }
     )
+    json_path, csv_path = InferencePipeline.write_reports([result], tmp_path)
     assert json_path.is_file()
     assert csv_path.is_file()
+    payload = json.loads(json_path.read_text(encoding="utf-8"))
+    assert payload[0]["mamba_backend"] == "lightweight"
 
 
 def test_torchscript_export_is_validated(tmp_path: Path) -> None:

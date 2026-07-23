@@ -81,8 +81,25 @@ class Predictor:
         return restored, PredictionResult(
             decoded_text=decoded.value if decoded is not None else None,
             latency_ms=(perf_counter() - started) * 1_000,
-            metadata={"device": str(self.device)},
+            metadata={"device": str(self.device), **self._architecture_identity()},
         )
+
+    def _architecture_identity(self) -> dict[str, str | None]:
+        """Return model backend metadata for inference result reports."""
+        identity = getattr(self.model, "architecture_identity", None)
+        if callable(identity):
+            value = identity()
+            if isinstance(value, dict):
+                return {
+                    "mamba_backend": value.get("mamba_backend"),
+                    "mamba_implementation": value.get("mamba_implementation"),
+                    "mamba_ssm_version": value.get("mamba_ssm_version"),
+                }
+        return {
+            "mamba_backend": None,
+            "mamba_implementation": None,
+            "mamba_ssm_version": None,
+        }
 
 
 def _synchronize(device: torch.device) -> None:

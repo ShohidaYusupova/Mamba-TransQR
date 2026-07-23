@@ -30,7 +30,9 @@ instructions are in [docs/installation.md](docs/installation.md).
 ```python
 from mambatransqr.models import ModelConfig, build_model
 
-model = build_model(ModelConfig(image_size=256, patch_size=16))
+model = build_model(
+    ModelConfig(image_size=256, patch_size=16, mamba_backend="mamba_ssm")
+)
 ```
 
 The model accepts normalized `BCHW` image tensors and returns restored tensors
@@ -95,7 +97,9 @@ from mambatransqr.training import (
     TrainerConfig,
 )
 
-model = build_model(ModelConfig(image_size=256, patch_size=16))
+model = build_model(
+    ModelConfig(image_size=256, patch_size=16, mamba_backend="mamba_ssm")
+)
 optimizer = OptimizerFactory.create(model.parameters())
 trainer = Trainer(
     model,

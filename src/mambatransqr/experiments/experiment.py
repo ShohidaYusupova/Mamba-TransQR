@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any
 
@@ -37,5 +38,44 @@ class Experiment:
     def summary(self, values: dict[str, Any]) -> Path:
         """Write JSON experiment summary."""
         path = self.directory / "summary.json"
-        path.write_text(json.dumps(values, indent=2, sort_keys=True), encoding="utf-8")
+        path.write_text(
+            json.dumps(
+                {**values, **_architecture_identity(self.config)},
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
         return path
+
+
+def _architecture_identity(config: dict[str, Any]) -> dict[str, str | None]:
+    """Extract mandatory Mamba traceability fields from experiment configuration."""
+    model = config.get("model", config)
+    if not isinstance(model, dict):
+        model = {}
+    backend = model.get("mamba_backend")
+    implementation = model.get("mamba_implementation")
+    if implementation is None:
+        implementation = (
+            "official_mamba_ssm"
+            if backend == "mamba_ssm"
+            else "lightweight_state_space"
+            if backend == "lightweight"
+            else None
+        )
+    package_version = model.get("mamba_ssm_version")
+    if package_version is None and backend == "mamba_ssm":
+        try:
+            package_version = version("mamba-ssm")
+        except PackageNotFoundError:
+            package_version = None
+    return {
+        "mamba_backend": backend if isinstance(backend, str) else None,
+        "mamba_implementation": (
+            implementation if isinstance(implementation, str) else None
+        ),
+        "mamba_ssm_version": (
+            package_version if isinstance(package_version, str) else None
+        ),
+    }
