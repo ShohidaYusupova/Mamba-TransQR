@@ -137,6 +137,8 @@ See [docs/training.md](docs/training.md) for the complete guide.
 
 ## Evaluation
 
+Run reproducible, measured benchmark recipes with `mambatransqr benchmark --config configs/benchmark.yaml`.
+
 Evaluate paired predictions with PSNR, SSIM, MSE, and MAE, then write portable
 reports. Optional QR decoding supports ZBar (`pyzbar`) and ZXing
 (`zxing-cpp`) when installed.

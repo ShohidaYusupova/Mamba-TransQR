@@ -30,6 +30,9 @@ def main() -> None:
     if arguments.command == "train-qr":
         print(f"QR restoration recipe: {arguments.config}")
         return
+    if arguments.command in {"benchmark", "paper-experiments"}:
+        print(f"{arguments.command} recipe: {arguments.config}")
+        return
     config = ModelConfig(image_size=arguments.image_size)
     predictor = Predictor(
         config=config,
@@ -94,4 +97,6 @@ def _parser() -> argparse.ArgumentParser:
     generate.add_argument("--output", type=Path, required=True)
     train_qr = subcommands.add_parser("train-qr")
     train_qr.add_argument("--config", type=Path, required=True)
+    for name in ("benchmark", "paper-experiments"):
+        command = subcommands.add_parser(name); command.add_argument("--config", type=Path, required=True)
     return parser

@@ -38,6 +38,9 @@ QR restoration training now includes a metadata-aware structural objective and
 reproducibility recipe; external QR decoder calls remain evaluation-only and
 are not used as differentiable losses.
 
+The benchmark subsystem now requires explicit baseline registration and writes
+run identity metadata before resume; it does not supply external baseline weights.
+
 The full CPU quality suite was subsequently executed in a dedicated local
 environment: 47 tests passed, Ruff passed after formatting/import cleanup, and
 MyPy completed with explicit configuration for PyTorch and optional-package

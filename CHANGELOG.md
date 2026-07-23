@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Synthetic QR paired-dataset generation with payload-safe data splits,
   metadata, integrity validation, and dataset manifests.
 - QR-specific multi-scale restoration objective and reproducibility recipe.
+- Reproducible benchmark registry, measured-result reporting, tables, and figures.
 
 ### Changed
 

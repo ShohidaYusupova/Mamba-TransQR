@@ -27,6 +27,9 @@ reconstruction, SSIM, edges, structural regions, and a differentiable decoding
 surrogate. It does not differentiate through ZBar or ZXing. Recipe metadata
 captures seeds, hashes, backend identity, dependencies, Git, and hardware.
 
+The benchmark pipeline reuses this recipe identity to prevent resuming into an
+incompatible dataset, checkpoint, or model configuration.
+
 ## Synthetic QR pairs
 
 Generate reproducible clean/damaged QR pairs with

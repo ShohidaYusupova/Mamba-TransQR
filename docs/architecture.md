@@ -29,3 +29,6 @@ The QR training objective weights finder, alignment, timing, quiet-zone, and
 module-boundary regions. Its decode-consistency term is a differentiable
 binarization/contrast surrogate and never claims differentiation through ZBar
 or ZXing.
+
+Benchmarking records backend identity and checkpoint provenance alongside every
+measured run, so official and lightweight Mamba results cannot be mixed.

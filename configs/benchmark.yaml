@@ -1,0 +1,5 @@
+output: results/benchmark
+seed: 42
+manifest: datasets/synthetic_qr/dataset_manifest.csv
+resume: true
+iterations: 10

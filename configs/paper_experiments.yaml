@@ -1,0 +1,3 @@
+benchmark_config: configs/benchmark.yaml
+output: results/paper
+ablations: [transformer_only, lightweight_backend, official_mamba, no_structure, no_decode_consistency, no_edge, fusion_variants, depth_variants]
