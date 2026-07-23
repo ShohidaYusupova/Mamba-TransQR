@@ -125,6 +125,13 @@ def test_qr_generator_supports_multiple_versions(version: int) -> None:
     assert image.size == (64, 64)
 
 
+def test_qr_generator_normalizes_payload_overflow() -> None:
+    """Package-specific QR overflow errors are exposed as the public ValueError."""
+    pytest.importorskip("qrcode")
+    with pytest.raises(ValueError, match="does not fit"):
+        QRGenerator.render(QRGenerationSpec(1, "H", "byte", "x" * 200, 64))
+
+
 def test_synthetic_builder_creates_pairs_metadata_and_validates(tmp_path: Path) -> None:
     """Builder emits paired PNGs, complete metadata, and a valid manifest."""
     pytest.importorskip("qrcode")

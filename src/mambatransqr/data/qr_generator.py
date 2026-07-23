@@ -86,7 +86,7 @@ class QRGenerator:
         code.add_data(spec.payload)
         try:
             code.make(fit=False)
-        except ValueError as error:
+        except (ValueError, qrcode.exceptions.DataOverflowError) as error:
             raise ValueError(
                 "payload does not fit the requested QR version/error-correction level"
             ) from error

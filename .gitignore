@@ -21,6 +21,7 @@ dist-check/
 .venv/
 venv/
 env/
+.venv-validation/
 .env
 .env.*
 
@@ -32,3 +33,8 @@ env/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Generated research data and runtime outputs
+datasets/
+results/
+.pytest-temp/
