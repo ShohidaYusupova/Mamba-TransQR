@@ -17,6 +17,8 @@ from mambatransqr.training import (  # noqa: E402
     LossManager,
     OptimizerConfig,
     OptimizerFactory,
+    SchedulerConfig,
+    SchedulerFactory,
     Trainer,
     TrainerConfig,
     TrainingState,
@@ -96,6 +98,44 @@ def test_checkpoint_manager_restores_state(tmp_path: Path) -> None:
     restored, _ = manager.load(manager.latest_path, model, optimizer)
     assert restored.epoch == 3
     assert manager.best_path.is_file()
+
+
+def test_checkpoint_can_deploy_ema_and_resume_raw_weights(tmp_path: Path) -> None:
+    """Deployable weights and raw resume weights remain distinct."""
+    model = torch.nn.Linear(1, 1, bias=False)
+    optimizer = OptimizerFactory.create(model.parameters())
+    raw = model.state_dict()["weight"].clone()
+    deployable = {"weight": raw + 1.0}
+    manager = CheckpointManager(tmp_path)
+    manager.save(
+        model,
+        optimizer,
+        TrainingState(),
+        deployable_model_state=deployable,
+        is_best=True,
+    )
+    manager.load(manager.best_path, model)
+    assert torch.equal(model.weight, deployable["weight"])
+    manager.load(manager.best_path, model, optimizer)
+    assert torch.equal(model.weight, raw)
+
+
+def test_warmup_cosine_scheduler_reaches_minimum_lr() -> None:
+    """Warmup-cosine scheduling warms up and decays to the configured floor."""
+    optimizer = torch.optim.SGD(torch.nn.Linear(1, 1).parameters(), lr=0.2)
+    scheduler = SchedulerFactory.create(
+        optimizer,
+        SchedulerConfig(
+            name="warmup_cosine", epochs=6, warmup_epochs=2, min_lr=0.01
+        ),
+    )
+    rates = [optimizer.param_groups[0]["lr"]]
+    for _ in range(6):
+        optimizer.step()
+        scheduler.step()
+        rates.append(optimizer.param_groups[0]["lr"])
+    assert rates[0] < rates[2]
+    assert rates[-1] == pytest.approx(0.01)
 
 
 def test_checkpoint_records_mamba_architecture_identity(tmp_path: Path) -> None:

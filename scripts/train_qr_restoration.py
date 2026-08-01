@@ -18,13 +18,19 @@ import yaml
 from PIL import Image
 from torch.utils.data import Dataset
 
-from mambatransqr.data.loader import create_evaluation_dataloader, create_train_dataloader
-from mambatransqr.models import ModelConfig, build_model
+from mambatransqr.data.loader import (
+    create_evaluation_dataloader,
+    create_train_dataloader,
+)
 from mambatransqr.losses import MultiScaleRestorationLoss, QRLossWeights
+from mambatransqr.models import ModelConfig, build_model
 from mambatransqr.training import (
+    EarlyStopping,
     OptimizerConfig,
     OptimizerFactory,
     QRRestorationTrainer,
+    SchedulerConfig,
+    SchedulerFactory,
     TensorBoardLogger,
     TrainerConfig,
 )
@@ -111,12 +117,21 @@ def run(config_path: str | Path) -> dict[str, float]:
     optimizer = OptimizerFactory.create(
         model.parameters(), OptimizerConfig(**recipe["optimizer"])
     )
+    scheduler = None
+    if "scheduler" in recipe:
+        scheduler = SchedulerFactory.create(
+            optimizer, SchedulerConfig(**recipe["scheduler"])
+        )
     objective = MultiScaleRestorationLoss(QRLossWeights(**recipe.get("loss", {})))
+    early_stopping = None
+    if "early_stopping" in recipe:
+        early_stopping = EarlyStopping(**recipe["early_stopping"])
     trainer = QRRestorationTrainer(
         model,
         optimizer,
         objective,
         TrainerConfig(**recipe["trainer"]),
+        scheduler=scheduler,
         loggers=[TensorBoardLogger(output_root / "tensorboard")],
     )
 
@@ -124,6 +139,7 @@ def run(config_path: str | Path) -> dict[str, float]:
     training_rows: list[dict[str, float]] = []
     validation_rows: list[dict[str, float]] = []
     for epoch in range(1, trainer.config.epochs + 1):
+        learning_rate = float(trainer.optimizer.param_groups[0]["lr"])
         train_metrics = _mean(trainer.train_batch(batch) for batch in train_loader)
         trainer.state.global_step += len(train_loader)
         if trainer.ema is not None:
@@ -134,6 +150,7 @@ def run(config_path: str | Path) -> dict[str, float]:
         metrics = {
             **{f"train_{name}": value for name, value in train_metrics.items()},
             **validation_metrics,
+            "learning_rate": learning_rate,
         }
         trainer.state.epoch = epoch
         trainer.state.metrics = metrics
@@ -145,7 +162,13 @@ def run(config_path: str | Path) -> dict[str, float]:
             trainer.model,
             trainer.optimizer,
             trainer.state,
+            scheduler=trainer.scheduler,
             ema_state=trainer.ema.state_dict() if trainer.ema is not None else None,
+            deployable_model_state=(
+                trainer.ema.averaged_model_state_dict(trainer.model)
+                if trainer.ema is not None
+                else None
+            ),
             reproducibility={"recipe": str(config_path), "model": asdict(model.config)},
             is_best=is_best,
         )
@@ -153,7 +176,9 @@ def run(config_path: str | Path) -> dict[str, float]:
         for logger in trainer.loggers:
             logger.log_metrics(metrics, trainer.state.global_step)
         training_rows.append({"epoch": float(epoch), **train_metrics})
-        validation_rows.append({"epoch": float(epoch), **validation_metrics})
+        validation_rows.append(
+            {"epoch": float(epoch), **validation_metrics, "learning_rate": learning_rate}
+        )
         print(
             f"epoch={epoch}/{trainer.config.epochs} "
             f"loss={train_metrics['loss']:.6f} "
@@ -161,14 +186,18 @@ def run(config_path: str | Path) -> dict[str, float]:
             f"val_ssim={validation_metrics['val_ssim']:.6f}",
             flush=True,
         )
+        trainer._step_scheduler(metrics)
+        if early_stopping is not None:
+            early_stopping.on_epoch_end(trainer, metrics)
+        if trainer.state.stopped_early:
+            break
     for logger in trainer.loggers:
         logger.close()
 
-    if trainer.ema is not None:
-        trainer.ema.apply_to(trainer.model)
+    trainer.checkpoints.load(
+        trainer.checkpoints.best_path, trainer.model, map_location=trainer.device
+    )
     test_metrics = trainer.validate_qr(test_loader)
-    if trainer.ema is not None:
-        trainer.ema.restore(trainer.model)
     runtime_seconds = time.perf_counter() - started
     _write_csv(output_root / "training_history.csv", training_rows)
     _write_csv(output_root / "validation_history.csv", validation_rows)

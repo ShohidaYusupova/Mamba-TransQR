@@ -63,12 +63,15 @@ class CheckpointManager:
         scheduler: Stateful | None = None,
         ema_state: dict[str, object] | None = None,
         reproducibility: dict[str, Any] | None = None,
+        deployable_model_state: dict[str, torch.Tensor] | None = None,
         is_best: bool = False,
     ) -> None:
         """Persist latest state and optionally update the best checkpoint."""
         architecture = _architecture_identity(model)
+        raw_model_state = model.state_dict()
         payload: dict[str, Any] = {
-            "model": model.state_dict(),
+            "model": deployable_model_state or raw_model_state,
+            "raw_model": raw_model_state if deployable_model_state is not None else None,
             "optimizer": optimizer.state_dict(),
             "state": state.to_dict(),
             "scheduler": scheduler.state_dict() if scheduler is not None else None,
@@ -103,7 +106,12 @@ class CheckpointManager:
             Restored training state and optional EMA state.
         """
         payload = torch.load(Path(path), map_location=map_location, weights_only=False)
-        model.load_state_dict(payload["model"])
+        model_state = (
+            payload.get("raw_model")
+            if optimizer is not None and payload.get("raw_model") is not None
+            else payload["model"]
+        )
+        model.load_state_dict(model_state)
         if optimizer is not None and payload.get("optimizer") is not None:
             optimizer.load_state_dict(payload["optimizer"])
         if scheduler is not None and payload.get("scheduler") is not None:

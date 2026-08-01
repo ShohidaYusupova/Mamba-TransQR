@@ -16,6 +16,8 @@ class SchedulerConfig:
     step_size: int = 30
     gamma: float = 0.1
     patience: int = 10
+    warmup_epochs: int = 0
+    min_lr: float = 0.0
 
 
 class SchedulerFactory:
@@ -37,6 +39,28 @@ class SchedulerFactory:
         """
         settings = config or SchedulerConfig()
         name = settings.name.lower()
+        if name == "warmup_cosine":
+            if not 0 < settings.warmup_epochs < settings.epochs:
+                raise ValueError("warmup_epochs must be between 1 and epochs - 1")
+            peak_lr = optimizer.param_groups[0]["lr"]
+            if not 0.0 <= settings.min_lr < peak_lr:
+                raise ValueError("min_lr must be non-negative and below peak LR")
+            warmup = optim.lr_scheduler.LinearLR(
+                optimizer,
+                start_factor=1.0 / settings.warmup_epochs,
+                end_factor=1.0,
+                total_iters=settings.warmup_epochs,
+            )
+            cosine = optim.lr_scheduler.CosineAnnealingLR(
+                optimizer,
+                T_max=settings.epochs - settings.warmup_epochs,
+                eta_min=settings.min_lr,
+            )
+            return optim.lr_scheduler.SequentialLR(
+                optimizer,
+                schedulers=[warmup, cosine],
+                milestones=[settings.warmup_epochs],
+            )
         if name == "cosine":
             return optim.lr_scheduler.CosineAnnealingLR(
                 optimizer, T_max=settings.epochs

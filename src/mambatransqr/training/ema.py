@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import OrderedDict
 from collections.abc import Mapping
 
 import torch
@@ -55,6 +56,15 @@ class ExponentialMovingAverage:
     def state_dict(self) -> dict[str, object]:
         """Return serializable EMA state."""
         return {"decay": self.decay, "shadow": self.shadow}
+
+    def averaged_model_state_dict(self, model: nn.Module) -> OrderedDict[str, Tensor]:
+        """Return a deployable model state with EMA parameters and live buffers."""
+        state = OrderedDict(
+            (name, value.detach().clone()) for name, value in model.state_dict().items()
+        )
+        for name, value in self.shadow.items():
+            state[name] = value.detach().clone()
+        return state
 
     def load_state_dict(self, state: Mapping[str, object]) -> None:
         """Load EMA state from a checkpoint."""
