@@ -49,6 +49,9 @@ class ModelConfig:
     mamba_d_state: int = 16
     mamba_d_conv: int = 4
     mamba_expand: int = 2
+    decoder_refinement_channels: int = 0
+    residual_learning: bool = False
+    residual_scale: float = 1.0
 
     def __post_init__(self) -> None:
         """Validate Mamba backend settings before model construction."""
@@ -56,6 +59,12 @@ class ModelConfig:
             raise ValueError("mamba_backend must be 'mamba_ssm' or 'lightweight'")
         if min(self.mamba_d_state, self.mamba_d_conv, self.mamba_expand) < 1:
             raise ValueError("Mamba dimensions must be positive")
+        if self.decoder_refinement_channels < 0:
+            raise ValueError("decoder_refinement_channels must be non-negative")
+        if self.residual_learning and self.decoder_refinement_channels == 0:
+            raise ValueError("residual learning requires decoder refinement")
+        if self.residual_scale <= 0.0:
+            raise ValueError("residual_scale must be positive")
 
     def architecture_identity(self) -> dict[str, str | None]:
         """Return backend metadata suitable for reports and checkpoints."""
@@ -106,8 +115,12 @@ class MambaTransQR(nn.Module):
             embed_dim=self.config.embed_dim,
             out_channels=self.config.out_channels,
             dropout=self.config.dropout,
+            refinement_channels=self.config.decoder_refinement_channels,
+            residual_learning=self.config.residual_learning,
+            residual_scale=self.config.residual_scale,
         )
         self._initialize_weights()
+        self.decoder.initialize_residual_identity()
 
     def _initialize_weights(self) -> None:
         """Initialize project layers without overwriting official Mamba defaults."""
@@ -134,4 +147,6 @@ class MambaTransQR(nn.Module):
         Returns:
             Reconstructed image tensor with configured output channels.
         """
-        return self.decoder(self.encoder(images))
+        return self.decoder(
+            self.encoder(images), images if self.config.residual_learning else None
+        )

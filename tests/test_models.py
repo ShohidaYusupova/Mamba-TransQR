@@ -139,7 +139,65 @@ def test_model_reconstructs_configured_image_shape(config: ModelConfig) -> None:
     model = build_model(config)
     output = model(torch.randn(2, 3, 32, 32))
     assert output.shape == (2, 3, 32, 32)
-    assert torch.all((0 <= output) & (output <= 1))
+    assert torch.all((output >= 0) & (output <= 1))
+
+
+def test_refinement_decoder_residual_starts_as_bounded_identity() -> None:
+    """The refined residual decoder starts from its damaged-image skip path."""
+    config = ModelConfig(
+        image_size=16,
+        patch_size=8,
+        embed_dim=8,
+        depth=1,
+        num_heads=2,
+        mamba_backend="lightweight",
+        decoder_refinement_channels=4,
+        residual_learning=True,
+    )
+    with pytest.warns(UserWarning, match="not the official Mamba"):
+        model = build_model(config)
+    inputs = torch.rand(2, 3, 16, 16)
+    output = model(inputs)
+    assert torch.equal(output, inputs)
+    assert any(isinstance(layer, torch.nn.Conv2d) for layer in model.decoder.refinement)
+
+
+def test_residual_learning_requires_refinement() -> None:
+    """Residual image learning cannot be enabled without a refinement decoder."""
+    with pytest.raises(ValueError, match="requires decoder refinement"):
+        ModelConfig(residual_learning=True)
+
+
+def test_phase3_capacity_exceeds_phase2_within_planned_values() -> None:
+    """The selected Phase 3 capacity is larger and uses planned dimensions."""
+    phase2 = ModelConfig(
+        image_size=128,
+        patch_size=16,
+        embed_dim=64,
+        depth=4,
+        num_heads=4,
+        mamba_backend="lightweight",
+    )
+    phase3 = ModelConfig(
+        image_size=128,
+        patch_size=8,
+        embed_dim=96,
+        depth=6,
+        num_heads=6,
+        mamba_backend="lightweight",
+        decoder_refinement_channels=32,
+        residual_learning=True,
+    )
+    with pytest.warns(UserWarning):
+        phase2_model = build_model(phase2)
+    with pytest.warns(UserWarning):
+        phase3_model = build_model(phase3)
+    assert phase3.patch_size == 8
+    assert phase3.embed_dim == 96
+    assert phase3.depth == 6
+    assert summarize_model(phase3_model).total_parameters > summarize_model(
+        phase2_model
+    ).total_parameters
 
 
 def test_model_summary_counts_trainable_parameters(config: ModelConfig) -> None:

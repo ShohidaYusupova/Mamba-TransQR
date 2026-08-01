@@ -22,6 +22,7 @@ from mambatransqr.data.loader import (
     create_evaluation_dataloader,
     create_train_dataloader,
 )
+from mambatransqr.evaluation import measure_latency
 from mambatransqr.losses import MultiScaleRestorationLoss, QRLossWeights
 from mambatransqr.models import ModelConfig, build_model
 from mambatransqr.training import (
@@ -198,6 +199,14 @@ def run(config_path: str | Path) -> dict[str, float]:
         trainer.checkpoints.best_path, trainer.model, map_location=trainer.device
     )
     test_metrics = trainer.validate_qr(test_loader)
+    latency_batch = next(iter(test_loader))["image"][:1].to(trainer.device)
+    with torch.inference_mode():
+        latency = measure_latency(
+            lambda: trainer.model(latency_batch),
+            warmup=5,
+            iterations=20,
+            device=trainer.device,
+        )
     runtime_seconds = time.perf_counter() - started
     _write_csv(output_root / "training_history.csv", training_rows)
     _write_csv(output_root / "validation_history.csv", validation_rows)
@@ -206,6 +215,10 @@ def run(config_path: str | Path) -> dict[str, float]:
         "test_psnr": test_metrics["val_psnr"],
         "test_ssim": test_metrics["val_ssim"],
         "runtime_seconds": runtime_seconds,
+        "parameter_count": sum(
+            parameter.numel() for parameter in trainer.model.parameters()
+        ),
+        "inference_latency_ms": latency.mean_ms,
     }
     with (output_root / "benchmark_summary.csv").open(
         "w", newline="", encoding="utf-8"
