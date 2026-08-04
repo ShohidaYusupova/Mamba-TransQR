@@ -8,6 +8,7 @@ from typing import Any, Protocol
 import torch
 from torch import nn, optim
 
+from mambatransqr.training.resume import restore_rng_state
 from mambatransqr.training.state import TrainingState
 
 
@@ -64,6 +65,11 @@ class CheckpointManager:
         ema_state: dict[str, object] | None = None,
         reproducibility: dict[str, Any] | None = None,
         deployable_model_state: dict[str, torch.Tensor] | None = None,
+        scaler_state: dict[str, Any] | None = None,
+        early_stopping_state: dict[str, Any] | None = None,
+        rng_state: dict[str, Any] | None = None,
+        resume_identity: dict[str, Any] | None = None,
+        resume_events: list[dict[str, Any]] | None = None,
         is_best: bool = False,
     ) -> None:
         """Persist latest state and optionally update the best checkpoint."""
@@ -76,6 +82,11 @@ class CheckpointManager:
             "state": state.to_dict(),
             "scheduler": scheduler.state_dict() if scheduler is not None else None,
             "ema": ema_state,
+            "grad_scaler": scaler_state,
+            "early_stopping": early_stopping_state,
+            "rng_state": rng_state,
+            "resume_identity": resume_identity,
+            "resume_events": resume_events or [],
             "architecture": architecture,
             **architecture,
             "reproducibility": reproducibility or {},
@@ -91,6 +102,9 @@ class CheckpointManager:
         optimizer: optim.Optimizer | None = None,
         *,
         scheduler: Stateful | None = None,
+        scaler: Stateful | None = None,
+        early_stopping: Stateful | None = None,
+        restore_rng: bool = False,
         map_location: str | torch.device = "cpu",
     ) -> tuple[TrainingState, dict[str, object] | None]:
         """Restore checkpoint content into supplied training components.
@@ -116,6 +130,12 @@ class CheckpointManager:
             optimizer.load_state_dict(payload["optimizer"])
         if scheduler is not None and payload.get("scheduler") is not None:
             scheduler.load_state_dict(payload["scheduler"])
+        if scaler is not None and payload.get("grad_scaler") is not None:
+            scaler.load_state_dict(payload["grad_scaler"])
+        if early_stopping is not None and payload.get("early_stopping") is not None:
+            early_stopping.load_state_dict(payload["early_stopping"])
+        if restore_rng and isinstance(payload.get("rng_state"), dict):
+            restore_rng_state(payload["rng_state"])
         ema = payload.get("ema")
         return TrainingState.from_dict(payload["state"]), (
             ema if isinstance(ema, dict) else None

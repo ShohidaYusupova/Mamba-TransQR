@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from contextlib import AbstractContextManager, nullcontext
+from typing import Any
 
 import torch
 from torch import Tensor, optim
@@ -40,3 +41,11 @@ class AMPManager:
         """Perform an optimizer update and refresh scaling."""
         self.scaler.step(optimizer)
         self.scaler.update()
+
+    def state_dict(self) -> dict[str, Any]:
+        """Return GradScaler state, including an empty disabled scaler state."""
+        return self.scaler.state_dict()
+
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        """Restore GradScaler state."""
+        self.scaler.load_state_dict(state)

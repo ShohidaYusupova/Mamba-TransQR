@@ -12,6 +12,13 @@ from mambatransqr.training.loss_manager import LossManager
 from mambatransqr.training.optimizer import OptimizerConfig, OptimizerFactory
 from mambatransqr.training.qr_trainer import QRRestorationTrainer
 from mambatransqr.training.recipes import reproducibility_metadata
+from mambatransqr.training.resume import (
+    IncompatibleCheckpointError,
+    capture_rng_state,
+    resolve_resume_checkpoint,
+    restore_rng_state,
+    validate_resume_identity,
+)
 from mambatransqr.training.scheduler import SchedulerConfig, SchedulerFactory
 from mambatransqr.training.state import TrainingState
 from mambatransqr.training.trainer import Trainer, TrainerConfig
@@ -24,6 +31,7 @@ __all__ = [
     "CheckpointManager",
     "EarlyStopping",
     "ExponentialMovingAverage",
+    "IncompatibleCheckpointError",
     "LossManager",
     "OptimizerConfig",
     "OptimizerFactory",
@@ -37,5 +45,9 @@ __all__ = [
     "TrainingHistory",
     "TrainingLogger",
     "TrainingState",
+    "capture_rng_state",
     "reproducibility_metadata",
+    "resolve_resume_checkpoint",
+    "restore_rng_state",
+    "validate_resume_identity",
 ]

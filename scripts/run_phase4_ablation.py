@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import hashlib
 import json
@@ -24,6 +25,7 @@ from train_qr_restoration import PairedQRDataset, run
 
 from mambatransqr.data.loader import create_evaluation_dataloader
 from mambatransqr.evaluation import measure_latency
+from mambatransqr.experiments.ablation_resume import selected_resumable_variants
 from mambatransqr.losses import MultiScaleRestorationLoss, QRLossWeights
 from mambatransqr.models import ModelConfig, build_model
 from mambatransqr.training import (
@@ -401,9 +403,53 @@ def _finalize_runtime_optimized(specification: dict[str, Any], base: dict[str, A
     )
 
 
+def _train_remaining(
+    specification: dict[str, Any],
+    base: dict[str, Any],
+    *,
+    resume: str,
+    requested_variant: str | None,
+) -> None:
+    selected = selected_resumable_variants(requested_variant)
+    if not selected:
+        print(f"skipped completed variant: {requested_variant}", flush=True)
+        return
+    if resume not in {"auto", "never"} and len(selected) != 1:
+        raise ValueError("an explicit resume PATH requires --variant")
+    pilot = specification["pilot"]
+    for variant in selected:
+        recipe = _merge(base, specification["variants"][variant])
+        recipe["variant_name"] = variant
+        recipe["trainer"]["epochs"] = int(pilot["epochs"])
+        recipe["output_dir"] = f"{pilot['results_root']}/{variant}"
+        recipe["trainer"]["checkpoint_dir"] = (
+            f"{pilot['checkpoint_root']}/{variant}"
+        )
+        recipe["latency"] = specification["latency"]
+        config_path = ROOT / recipe["output_dir"] / "resolved_config.yaml"
+        config_path.parent.mkdir(parents=True, exist_ok=True)
+        config_path.write_text(yaml.safe_dump(recipe, sort_keys=True), encoding="utf-8")
+        run(config_path, resume=resume, variant_name=variant)
+
+
 def main() -> None:
+    parser = argparse.ArgumentParser(prog="run_phase4_ablation")
+    parser.add_argument("--resume", default="auto", metavar="auto|never|PATH")
+    parser.add_argument("--variant", choices=VARIANTS)
+    parser.add_argument(
+        "--mode", choices=("report", "train-remaining"), default="report"
+    )
+    args = parser.parse_args()
     specification = yaml.safe_load((ROOT / "configs" / "phase4_ablation.yaml").read_text(encoding="utf-8"))
     base = yaml.safe_load((ROOT / specification["base_config"]).read_text(encoding="utf-8"))
+    if args.mode == "train-remaining":
+        _train_remaining(
+            specification,
+            base,
+            resume=args.resume,
+            requested_variant=args.variant,
+        )
+        return
     if "completed_30_epoch_variants" in specification:
         _finalize_runtime_optimized(specification, base)
         return

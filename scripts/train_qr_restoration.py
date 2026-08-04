@@ -4,25 +4,26 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import random
 import shutil
 import time
 from collections.abc import Iterable
 from dataclasses import asdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 import torch
 import yaml
-from PIL import Image
-from torch.utils.data import Dataset
 
 from mambatransqr.data.loader import (
     create_evaluation_dataloader,
     create_train_dataloader,
 )
+from mambatransqr.data.paired_dataset import PairedQRDataset
 from mambatransqr.evaluation import measure_latency
 from mambatransqr.losses import MultiScaleRestorationLoss, QRLossWeights
 from mambatransqr.models import ModelConfig, build_model
@@ -35,37 +36,10 @@ from mambatransqr.training import (
     SchedulerFactory,
     TensorBoardLogger,
     TrainerConfig,
+    capture_rng_state,
+    resolve_resume_checkpoint,
+    validate_resume_identity,
 )
-
-
-class PairedQRDataset(Dataset[dict[str, Any]]):
-    """Load paired images described by the generated QR metadata files."""
-
-    def __init__(self, root: Path, split: str) -> None:
-        self.root = root
-        self.records = [
-            json.loads(path.read_text(encoding="utf-8"))
-            for path in sorted((root / split / "metadata").glob("*.json"))
-        ]
-        if not self.records:
-            raise ValueError(f"no paired QR records found for split: {split}")
-
-    def __len__(self) -> int:
-        return len(self.records)
-
-    def __getitem__(self, index: int) -> dict[str, Any]:
-        record = self.records[index]
-        return {
-            "image": _load_tensor(self.root / record["damaged_image_path"]),
-            "target": _load_tensor(self.root / record["clean_image_path"]),
-            "metadata": record,
-        }
-
-
-def _load_tensor(path: Path) -> torch.Tensor:
-    with Image.open(path) as image:
-        pixels = np.asarray(image.convert("RGB"), dtype=np.float32).copy()
-    return torch.from_numpy(pixels).permute(2, 0, 1) / 255.0
 
 
 def _mean(rows: Iterable[dict[str, float]]) -> dict[str, float]:
@@ -90,7 +64,55 @@ def _write_csv(path: Path, rows: list[dict[str, float]]) -> None:
         writer.writerows(rows)
 
 
-def run(config_path: str | Path) -> dict[str, float]:
+def _read_csv(path: Path, completed_epochs: int) -> list[dict[str, float]]:
+    if not path.is_file():
+        return []
+    with path.open(newline="", encoding="utf-8") as stream:
+        return [
+            {key: float(value) for key, value in row.items()}
+            for row in csv.DictReader(stream)
+            if int(float(row["epoch"])) <= completed_epochs
+        ]
+
+
+def _hash_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _configuration_hash(recipe: dict[str, Any]) -> str:
+    controlled = json.loads(json.dumps(recipe))
+    controlled.pop("output_dir", None)
+    controlled.pop("latency", None)
+    controlled.get("trainer", {}).pop("checkpoint_dir", None)
+    payload = json.dumps(controlled, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode()).hexdigest()
+
+
+def _resume_identity(
+    recipe: dict[str, Any], model: torch.nn.Module, variant_name: str
+) -> dict[str, Any]:
+    manifest = Path(recipe["dataset"]["root"]) / "dataset_manifest.csv"
+    architecture = model.architecture_identity()
+    return {
+        "variant_name": variant_name,
+        "configuration_hash": _configuration_hash(recipe),
+        "dataset_manifest_hash": _hash_file(manifest),
+        "random_seed": int(recipe["trainer"]["seed"]),
+        "backend_identity": architecture,
+        "model_architecture": asdict(model.config),
+    }
+
+
+def run(
+    config_path: str | Path,
+    *,
+    resume: str | Path = "never",
+    variant_name: str | None = None,
+) -> dict[str, float]:
     """Train, validate, checkpoint, and benchmark a QR restoration model."""
     recipe = yaml.safe_load(Path(config_path).read_text(encoding="utf-8"))
     dataset_root = Path(recipe["dataset"]["root"])
@@ -142,10 +164,61 @@ def run(config_path: str | Path) -> dict[str, float]:
         loggers=[TensorBoardLogger(output_root / "tensorboard")],
     )
 
+    name = variant_name or str(recipe.get("variant_name", Path(config_path).stem))
+    identity = _resume_identity(recipe, model, name)
+    resume_path = resolve_resume_checkpoint(resume, checkpoint_dir)
+    resume_events: list[dict[str, Any]] = []
+    if resume_path is not None:
+        payload = torch.load(resume_path, map_location="cpu", weights_only=False)
+        validate_resume_identity(payload, identity)
+        trainer.state, ema_state = trainer.checkpoints.load(
+            resume_path,
+            trainer.model,
+            trainer.optimizer,
+            scheduler=trainer.scheduler,
+            scaler=trainer.engine.amp,
+            early_stopping=early_stopping,
+            restore_rng=True,
+            map_location=trainer.device,
+        )
+        if trainer.ema is not None:
+            if ema_state is None:
+                raise ValueError("EMA-enabled run checkpoint has no EMA state")
+            trainer.ema.load_state_dict(ema_state)
+        resume_events = list(payload.get("resume_events", []))
+        resume_events.append(
+            {
+                "resumed": True,
+                "checkpoint_path": str(resume_path),
+                "resumed_epoch": trainer.state.epoch,
+                "checkpoint_hash": _hash_file(resume_path),
+                "resume_timestamp": datetime.now(datetime.UTC).isoformat(),
+            }
+        )
+
+    metadata = {
+        "variant_name": name,
+        "resume": resume_events[-1] if resume_events else {"resumed": False},
+        "resume_events": resume_events,
+        "resume_identity": identity,
+    }
+    (output_root / "run_metadata.json").write_text(
+        json.dumps(metadata, indent=2), encoding="utf-8"
+    )
+
     started = time.perf_counter()
-    training_rows: list[dict[str, float]] = []
-    validation_rows: list[dict[str, float]] = []
-    for epoch in range(1, trainer.config.epochs + 1):
+    training_rows = _read_csv(
+        output_root / "training_history.csv", trainer.state.epoch
+    )
+    validation_rows = _read_csv(
+        output_root / "validation_history.csv", trainer.state.epoch
+    )
+    next_epoch = (
+        trainer.config.epochs + 1
+        if trainer.state.stopped_early
+        else trainer.state.epoch + 1
+    )
+    for epoch in range(next_epoch, trainer.config.epochs + 1):
         learning_rate = float(trainer.optimizer.param_groups[0]["lr"])
         train_metrics = _mean(trainer.train_batch(batch) for batch in train_loader)
         trainer.state.global_step += len(train_loader)
@@ -165,21 +238,6 @@ def run(config_path: str | Path) -> dict[str, float]:
         if is_best:
             trainer.state.best_metric = metrics[trainer.config.monitor]
             trainer.state.best_epoch = epoch
-        trainer.checkpoints.save(
-            trainer.model,
-            trainer.optimizer,
-            trainer.state,
-            scheduler=trainer.scheduler,
-            ema_state=trainer.ema.state_dict() if trainer.ema is not None else None,
-            deployable_model_state=(
-                trainer.ema.averaged_model_state_dict(trainer.model)
-                if trainer.ema is not None
-                else None
-            ),
-            reproducibility={"recipe": str(config_path), "model": asdict(model.config)},
-            is_best=is_best,
-        )
-        shutil.copy2(trainer.checkpoints.latest_path, checkpoint_dir / f"epoch_{epoch:03d}.pt")
         for logger in trainer.loggers:
             logger.log_metrics(metrics, trainer.state.global_step)
         training_rows.append({"epoch": float(epoch), **train_metrics})
@@ -196,6 +254,32 @@ def run(config_path: str | Path) -> dict[str, float]:
         trainer._step_scheduler(metrics)
         if early_stopping is not None:
             early_stopping.on_epoch_end(trainer, metrics)
+        _write_csv(output_root / "training_history.csv", training_rows)
+        _write_csv(output_root / "validation_history.csv", validation_rows)
+        trainer.checkpoints.save(
+            trainer.model,
+            trainer.optimizer,
+            trainer.state,
+            scheduler=trainer.scheduler,
+            ema_state=trainer.ema.state_dict() if trainer.ema is not None else None,
+            deployable_model_state=(
+                trainer.ema.averaged_model_state_dict(trainer.model)
+                if trainer.ema is not None
+                else None
+            ),
+            scaler_state=trainer.engine.amp.state_dict(),
+            early_stopping_state=(
+                early_stopping.state_dict() if early_stopping is not None else None
+            ),
+            rng_state=capture_rng_state(),
+            resume_identity=identity,
+            resume_events=resume_events,
+            reproducibility={"recipe": str(config_path), "model": asdict(model.config)},
+            is_best=is_best,
+        )
+        shutil.copy2(
+            trainer.checkpoints.latest_path, checkpoint_dir / f"epoch_{epoch:03d}.pt"
+        )
         if trainer.state.stopped_early:
             break
     for logger in trainer.loggers:
@@ -238,7 +322,10 @@ def run(config_path: str | Path) -> dict[str, float]:
 def main() -> None:
     parser = argparse.ArgumentParser(prog="train_qr_restoration")
     parser.add_argument("--config", type=Path, required=True)
-    print(run(parser.parse_args().config))
+    parser.add_argument("--resume", default="never", metavar="auto|never|PATH")
+    parser.add_argument("--variant-name")
+    args = parser.parse_args()
+    print(run(args.config, resume=args.resume, variant_name=args.variant_name))
 
 
 if __name__ == "__main__":

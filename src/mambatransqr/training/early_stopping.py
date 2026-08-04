@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from mambatransqr.training.callbacks import Callback
 
@@ -59,3 +59,12 @@ class EarlyStopping(Callback):
         if self.mode == "min":
             return value < self.best - self.min_delta
         return value > self.best + self.min_delta
+
+    def state_dict(self) -> dict[str, Any]:
+        """Return mutable early-stopping progress for exact resume."""
+        return {"best": self.best, "wait": self.wait}
+
+    def load_state_dict(self, state: dict[str, Any]) -> None:
+        """Restore mutable early-stopping progress."""
+        self.best = float(state["best"]) if state.get("best") is not None else None
+        self.wait = int(state.get("wait", 0))
