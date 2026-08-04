@@ -44,8 +44,6 @@ class Decoder(nn.Module):
             raise ValueError("embed_dim and out_channels must be positive")
         if refinement_channels < 0:
             raise ValueError("refinement_channels must be non-negative")
-        if residual_learning and refinement_channels == 0:
-            raise ValueError("residual learning requires convolutional refinement")
         if residual_scale <= 0.0:
             raise ValueError("residual_scale must be positive")
         self.grid_size = tuple(

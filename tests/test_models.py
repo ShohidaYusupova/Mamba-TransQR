@@ -162,10 +162,10 @@ def test_refinement_decoder_residual_starts_as_bounded_identity() -> None:
     assert any(isinstance(layer, torch.nn.Conv2d) for layer in model.decoder.refinement)
 
 
-def test_residual_learning_requires_refinement() -> None:
-    """Residual image learning cannot be enabled without a refinement decoder."""
-    with pytest.raises(ValueError, match="requires decoder refinement"):
-        ModelConfig(residual_learning=True)
+def test_residual_learning_without_refinement_preserves_patch_path() -> None:
+    """An ablation may bypass refinement without replacing patch reconstruction."""
+    config = ModelConfig(residual_learning=True)
+    assert config.decoder_refinement_channels == 0
 
 
 def test_phase3_capacity_exceeds_phase2_within_planned_values() -> None:

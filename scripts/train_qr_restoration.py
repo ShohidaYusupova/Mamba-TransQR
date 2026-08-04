@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import random
 import shutil
 import time
 from collections.abc import Iterable
@@ -97,6 +98,11 @@ def run(config_path: str | Path) -> dict[str, float]:
     output_root.mkdir(parents=True, exist_ok=True)
     checkpoint_dir = Path(recipe["trainer"]["checkpoint_dir"])
     checkpoint_dir.mkdir(parents=True, exist_ok=True)
+
+    seed = int(recipe["trainer"]["seed"])
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
     datasets = {
         split: PairedQRDataset(dataset_root, split)
@@ -203,8 +209,8 @@ def run(config_path: str | Path) -> dict[str, float]:
     with torch.inference_mode():
         latency = measure_latency(
             lambda: trainer.model(latency_batch),
-            warmup=5,
-            iterations=20,
+            warmup=int(recipe.get("latency", {}).get("warmup", 5)),
+            iterations=int(recipe.get("latency", {}).get("iterations", 20)),
             device=trainer.device,
         )
     runtime_seconds = time.perf_counter() - started

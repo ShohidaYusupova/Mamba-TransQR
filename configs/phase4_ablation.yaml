@@ -1,0 +1,23 @@
+# One-factor-at-a-time ablations of the verified Phase 3 pilot.
+base_config: configs/phase3_pilot.yaml
+latency:
+  batch_size: 1
+  warmup: 10
+  iterations: 100
+variants:
+  full_model: {}
+  without_mamba:
+    model:
+      use_mamba: false
+  without_qr_structure_loss:
+    loss:
+      structure_weight: 0.0
+  without_decode_consistency_loss:
+    loss:
+      decode_consistency_weight: 0.0
+  without_ema:
+    trainer:
+      use_ema: false
+  without_refinement_decoder:
+    model:
+      decoder_refinement_channels: 0

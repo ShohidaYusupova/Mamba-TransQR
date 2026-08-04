@@ -49,6 +49,7 @@ class ModelConfig:
     mamba_d_state: int = 16
     mamba_d_conv: int = 4
     mamba_expand: int = 2
+    use_mamba: bool = True
     decoder_refinement_channels: int = 0
     residual_learning: bool = False
     residual_scale: float = 1.0
@@ -61,8 +62,6 @@ class ModelConfig:
             raise ValueError("Mamba dimensions must be positive")
         if self.decoder_refinement_channels < 0:
             raise ValueError("decoder_refinement_channels must be non-negative")
-        if self.residual_learning and self.decoder_refinement_channels == 0:
-            raise ValueError("residual learning requires decoder refinement")
         if self.residual_scale <= 0.0:
             raise ValueError("residual_scale must be positive")
 
@@ -104,6 +103,7 @@ class MambaTransQR(nn.Module):
             mamba_d_state=self.config.mamba_d_state,
             mamba_d_conv=self.config.mamba_d_conv,
             mamba_expand=self.config.mamba_expand,
+            use_mamba=self.config.use_mamba,
             dropout=self.config.dropout,
             drop_path_rate=self.config.drop_path_rate,
             positional_encoding=self.config.positional_encoding,

@@ -39,3 +39,5 @@ datasets/
 results/
 checkpoints/
 .pytest-temp/
+.pytest_tmp/
+.runtime_tmp/

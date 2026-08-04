@@ -33,6 +33,7 @@ class HybridFusionBlock(nn.Module):
         mamba_d_state: int = 16,
         mamba_d_conv: int = 4,
         mamba_expand: int = 2,
+        use_mamba: bool = True,
         dropout: float = 0.0,
         drop_path: float = 0.0,
         activation: str = "gelu",
@@ -63,11 +64,14 @@ class HybridFusionBlock(nn.Module):
             nn.Linear(embed_dim, embed_dim), nn.Dropout(dropout)
         )
         self.drop_path = DropPath(drop_path)
+        self.use_mamba = use_mamba
 
     def forward(self, tokens: Tensor) -> Tensor:
         """Fuse the Mamba and Transformer residual branch outputs."""
-        mamba_tokens = self.mamba(tokens)
         transformer_tokens = self.transformer(tokens)
+        if not self.use_mamba:
+            return tokens + self.drop_path(self.projection(transformer_tokens))
+        mamba_tokens = self.mamba(tokens)
         features = self.fusion_norm(
             torch.cat((mamba_tokens, transformer_tokens), dim=-1)
         )
