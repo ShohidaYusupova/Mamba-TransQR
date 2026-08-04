@@ -268,9 +268,145 @@ def _generate(rows: list[dict[str, Any]], base: dict[str, Any]) -> None:
     (RESULTS / "reproducibility.json").write_text(json.dumps(reproducibility, indent=2), encoding="utf-8")
 
 
+def _budget_table(rows: list[dict[str, Any]]) -> str:
+    header = "| Variant | Training budget | Params | Val PSNR | Val SSIM | Test PSNR | Test SSIM | Latency | Best epoch |\n| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |\n"
+    return header + "".join(
+        f"| {row['variant']} | {row['training_budget_epochs']} epochs | {row['parameter_count']} | {_fmt(row['best_validation_psnr'])} | {_fmt(row['best_validation_ssim'], 6)} | {_fmt(row['test_psnr'])} | {_fmt(row['test_ssim'], 6)} | {_fmt(row['inference_latency_ms'], 3)} ms | {row['best_epoch']} |\n"
+        for row in rows
+    )
+
+
+def _pilot_record(
+    variant: str,
+    recipe: dict[str, Any],
+    source_results: Path,
+    source_checkpoints: Path,
+) -> dict[str, Any]:
+    output = ROOT / recipe["output_dir"]
+    checkpoint_dir = ROOT / recipe["trainer"]["checkpoint_dir"]
+    output.mkdir(parents=True, exist_ok=True)
+    checkpoint_dir.mkdir(parents=True, exist_ok=True)
+    budget = int(recipe["trainer"]["epochs"])
+    training = _read_rows(source_results / "training_history.csv")[:budget]
+    validation = _read_rows(source_results / "validation_history.csv")[:budget]
+    best = max(validation, key=lambda row: float(row["val_psnr"]))
+    best_epoch = int(float(best["epoch"]))
+    source_checkpoint = source_checkpoints / f"epoch_{best_epoch:03d}.pt"
+    checkpoint = checkpoint_dir / "best.pt"
+    shutil.copy2(source_checkpoint, checkpoint)
+    _write_csv(output / "training_history.csv", training)
+    _write_csv(output / "validation_history.csv", validation)
+    (output / "resolved_config.yaml").write_text(
+        yaml.safe_dump(recipe, sort_keys=True), encoding="utf-8"
+    )
+    evaluation_started = time.perf_counter()
+    benchmark = _evaluate(recipe, checkpoint)
+    evaluation_runtime = time.perf_counter() - evaluation_started
+    benchmark_row = {
+        "model": "mamba_transqr_lightweight",
+        **benchmark,
+        "evaluation_runtime_seconds": evaluation_runtime,
+        "training_runtime_seconds": "unavailable: original runner recorded only total 30-epoch runtime",
+    }
+    _write_csv(output / "benchmark_summary.csv", [benchmark_row])
+    manifest = ROOT / recipe["dataset"]["root"] / "dataset_manifest.csv"
+    payload = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    return {
+        "variant": variant,
+        "result_class": "15-epoch pilot",
+        "training_budget_epochs": budget,
+        "status": "resumed_from_saved_epoch_checkpoints",
+        "parameter_count": int(benchmark["parameter_count"]),
+        "initial_loss": float(training[0]["loss"]),
+        "final_loss": float(training[-1]["loss"]),
+        "best_validation_psnr": float(best["val_psnr"]),
+        "best_validation_ssim": float(best["val_ssim"]),
+        "test_psnr": benchmark["test_psnr"],
+        "test_ssim": benchmark["test_ssim"],
+        "inference_latency_ms": benchmark["inference_latency_ms"],
+        "best_epoch": best_epoch,
+        "checkpoint_path": checkpoint.relative_to(ROOT).as_posix(),
+        "source_checkpoint_path": source_checkpoint.relative_to(ROOT).as_posix(),
+        "training_runtime_seconds": None,
+        "training_runtime_note": "Unavailable because the original runner recorded only the complete 30-epoch runtime.",
+        "evaluation_runtime_seconds": evaluation_runtime,
+        "configuration_hash": _config_hash(recipe),
+        "dataset_manifest_hash": _sha256(manifest),
+        "checkpoint_hash": _sha256(checkpoint),
+        "backend_identity": json.dumps(payload.get("architecture", {}), sort_keys=True),
+    }
+
+
+def _finalize_runtime_optimized(specification: dict[str, Any], base: dict[str, Any]) -> None:
+    full_summary = json.loads((RESULTS / "ablation_summary.json").read_text(encoding="utf-8"))
+    completed_names = specification["completed_30_epoch_variants"]
+    completed = [
+        {**row, "result_class": "completed 30-epoch ablation", "training_budget_epochs": 30}
+        for row in full_summary
+        if row["variant"] in completed_names
+    ]
+    if [row["variant"] for row in completed] != completed_names:
+        raise ValueError("completed 30-epoch artifacts are missing or out of order")
+    (RESULTS / "ablation_table_full_30_epochs.md").write_text(
+        _budget_table(completed), encoding="utf-8"
+    )
+
+    pilot_spec = specification["pilot"]
+    pilot_root = ROOT / pilot_spec["results_root"]
+    pilot_root.mkdir(parents=True, exist_ok=True)
+    pilots = []
+    for variant in specification["pilot_15_epoch_variants"]:
+        recipe = _merge(base, specification["variants"][variant])
+        recipe["trainer"]["epochs"] = int(pilot_spec["epochs"])
+        recipe["output_dir"] = f"{pilot_spec['results_root']}/{variant}"
+        recipe["trainer"]["checkpoint_dir"] = (
+            f"{pilot_spec['checkpoint_root']}/{variant}"
+        )
+        recipe["latency"] = specification["latency"]
+        pilots.append(
+            _pilot_record(
+                variant,
+                recipe,
+                RESULTS / variant,
+                ROOT / pilot_spec["resume_checkpoint_root"] / variant,
+            )
+        )
+    _write_csv(pilot_root / "ablation_pilot_raw_results.csv", pilots)
+    (pilot_root / "ablation_pilot_summary.json").write_text(
+        json.dumps(pilots, indent=2), encoding="utf-8"
+    )
+    pilot_table = _budget_table(pilots)
+    (pilot_root / "ablation_table_pilot_15_epochs.md").write_text(
+        pilot_table, encoding="utf-8"
+    )
+    report = [
+        "# Phase 4 runtime-optimized ablation report",
+        "",
+        "## Completed 30-epoch ablations",
+        "",
+        _budget_table(completed),
+        "## Separate 15-epoch pilot ablations",
+        "",
+        pilot_table,
+        "The pilot rows were recovered from saved epoch checkpoints and evaluated from the best validation checkpoint available within epochs 1–15. They were not retrained. Each uses the original 30-epoch warmup-cosine schedule state stopped at epoch 15, preserving the Phase 3 learning-rate trajectory through that point.",
+        "",
+        "## Unequal-budget limitation",
+        "",
+        "The two tables are intentionally separate. A 15-epoch pilot has half the optimization budget of a completed 30-epoch run, so differences between cohorts cannot be attributed solely to the ablated component. Pilot values are suitable for screening and runtime planning, not direct effect-size comparison with the 30-epoch cohort. Within each table, dataset, split, seed, optimizer, batch size, model settings other than the named ablation, and the 100-iteration batch-one latency protocol are controlled.",
+        "",
+        "Exact pilot training runtime is unavailable because the original sequential runner stored only total runtime after 30 epochs; it is recorded as null rather than estimated.",
+    ]
+    (RESULTS / "ablation_report.md").write_text(
+        "\n".join(report) + "\n", encoding="utf-8"
+    )
+
+
 def main() -> None:
     specification = yaml.safe_load((ROOT / "configs" / "phase4_ablation.yaml").read_text(encoding="utf-8"))
     base = yaml.safe_load((ROOT / specification["base_config"]).read_text(encoding="utf-8"))
+    if "completed_30_epoch_variants" in specification:
+        _finalize_runtime_optimized(specification, base)
+        return
     rows: list[dict[str, Any]] = []
     RESULTS.mkdir(parents=True, exist_ok=True)
     CHECKPOINTS.mkdir(parents=True, exist_ok=True)

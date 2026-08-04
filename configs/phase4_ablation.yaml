@@ -4,6 +4,19 @@ latency:
   batch_size: 1
   warmup: 10
   iterations: 100
+completed_30_epoch_variants:
+  - full_model
+  - without_mamba
+  - without_qr_structure_loss
+pilot_15_epoch_variants:
+  - without_decode_consistency_loss
+  - without_ema
+  - without_refinement_decoder
+pilot:
+  epochs: 15
+  results_root: results/ablation_pilot
+  checkpoint_root: checkpoints/ablation_pilot
+  resume_checkpoint_root: checkpoints/ablation
 variants:
   full_model: {}
   without_mamba:
