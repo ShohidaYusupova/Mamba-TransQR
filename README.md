@@ -7,6 +7,12 @@ Mamba-TransQR provides an end-to-end, configurable workflow for damaged QR
 image restoration: data preparation, hybrid Mamba-Transformer modeling,
 training, evaluation, and deployable inference.
 
+The completed research sequence covers the first real baseline, three
+optimization phases, a controlled ablation study, a final benchmark, and a
+publication-package audit. See the
+[reproducibility guide](docs/reproducibility.md) for artifact provenance,
+commands, backend identity, and interpretation limits.
+
 ## Requirements
 
 - Python 3.11 or later
@@ -187,6 +193,25 @@ Mamba-inspired compatibility backend for CPU smoke tests. Checkpoints and
 reports record `mamba_backend`, `mamba_implementation`, and
 `mamba_ssm_version`. See
 [docs/architecture.md](docs/architecture.md) for details.
+
+## Completed experiment artifacts
+
+Generated datasets, checkpoints, logs, and results are intentionally ignored by
+Git. In a workspace containing the completed artifacts, the principal outputs
+are:
+
+- `results/first_real_qr_restoration/`: baseline histories and test metrics;
+- `results/phase1_pilot/`, `phase2_pilot/`, and `phase3_pilot/`: controlled
+  optimization results;
+- `results/ablation/final/`: completed 30-epoch ablation table and figures;
+- `results/final_benchmark/`: final fixed-protocol benchmark;
+- `results/final_analysis/paper_ready/`: audited tables, figures, provenance,
+  corrections log, and Results and Discussion text.
+
+The completed Phase 3 and ablation experiments used the non-official
+`lightweight` state-space backend. They must not be described as measurements
+of the official Mamba-SSM implementation. Missing compatible CNN/Transformer
+benchmark checkpoints remain `N/A`; they were not estimated or substituted.
 
 ## Project layout
 
