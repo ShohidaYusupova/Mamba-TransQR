@@ -1,0 +1,21 @@
+dataset:
+  root: datasets/first_real_qr_10k
+  split: test
+data_loader:
+  batch_size: 16
+  num_workers: 0
+model_config: configs/phase3_pilot.yaml
+checkpoint: checkpoints/phase3_pilot/best.pt
+latency:
+  batch_size: 1
+  warmup: 10
+  iterations: 100
+models:
+  - Degraded Input
+  - SRCNN
+  - ESPCN
+  - VDSR
+  - EDSR
+  - SwinIR
+  - Mamba-TransQR
+output_dir: results/final_benchmark
