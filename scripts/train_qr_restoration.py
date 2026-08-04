@@ -11,7 +11,7 @@ import shutil
 import time
 from collections.abc import Iterable
 from dataclasses import asdict
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -107,6 +107,33 @@ def _resume_identity(
     }
 
 
+def _validate_completed_legacy_checkpoint(
+    payload: dict[str, Any],
+    expected: dict[str, Any],
+    config_path: Path,
+    total_epochs: int,
+) -> None:
+    """Validate a schema-v0 checkpoint only when no training remains."""
+    state = payload.get("state", {})
+    if int(state.get("epoch", 0)) < total_epochs:
+        raise ValueError(
+            "unfinished legacy checkpoint cannot be resumed safely without complete "
+            "identity and RNG state"
+        )
+    reproducibility = payload.get("reproducibility", {})
+    recorded_recipe = Path(str(reproducibility.get("recipe", ""))).resolve()
+    if recorded_recipe != config_path.resolve():
+        raise ValueError("legacy checkpoint recipe path does not match requested config")
+    if reproducibility.get("model") != expected["model_architecture"]:
+        raise ValueError("legacy checkpoint model architecture is incompatible")
+    if payload.get("architecture") != expected["backend_identity"]:
+        raise ValueError("legacy checkpoint backend identity is incompatible")
+    companion = yaml.safe_load(recorded_recipe.read_text(encoding="utf-8"))
+    if _configuration_hash(companion) != expected["configuration_hash"]:
+        raise ValueError("legacy checkpoint companion configuration is incompatible")
+    payload["resume_identity"] = expected
+
+
 def run(
     config_path: str | Path,
     *,
@@ -170,6 +197,13 @@ def run(
     resume_events: list[dict[str, Any]] = []
     if resume_path is not None:
         payload = torch.load(resume_path, map_location="cpu", weights_only=False)
+        if not isinstance(payload.get("resume_identity"), dict):
+            _validate_completed_legacy_checkpoint(
+                payload,
+                identity,
+                Path(config_path),
+                trainer.config.epochs,
+            )
         validate_resume_identity(payload, identity)
         trainer.state, ema_state = trainer.checkpoints.load(
             resume_path,
@@ -192,7 +226,7 @@ def run(
                 "checkpoint_path": str(resume_path),
                 "resumed_epoch": trainer.state.epoch,
                 "checkpoint_hash": _hash_file(resume_path),
-                "resume_timestamp": datetime.now(datetime.UTC).isoformat(),
+                "resume_timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -207,6 +241,13 @@ def run(
     )
 
     started = time.perf_counter()
+    prior_runtime: float | None = None
+    prior_benchmark = output_root / "benchmark_summary.csv"
+    if trainer.state.epoch >= trainer.config.epochs and prior_benchmark.is_file():
+        with prior_benchmark.open(newline="", encoding="utf-8") as stream:
+            prior_row = next(csv.DictReader(stream), None)
+        if prior_row and prior_row.get("runtime_seconds"):
+            prior_runtime = float(prior_row["runtime_seconds"])
     training_rows = _read_csv(
         output_root / "training_history.csv", trainer.state.epoch
     )
@@ -297,7 +338,8 @@ def run(
             iterations=int(recipe.get("latency", {}).get("iterations", 20)),
             device=trainer.device,
         )
-    runtime_seconds = time.perf_counter() - started
+    evaluation_runtime_seconds = time.perf_counter() - started
+    runtime_seconds = prior_runtime or evaluation_runtime_seconds
     _write_csv(output_root / "training_history.csv", training_rows)
     _write_csv(output_root / "validation_history.csv", validation_rows)
     benchmark = {
@@ -309,6 +351,7 @@ def run(
             parameter.numel() for parameter in trainer.model.parameters()
         ),
         "inference_latency_ms": latency.mean_ms,
+        "resume_evaluation_runtime_seconds": evaluation_runtime_seconds,
     }
     with (output_root / "benchmark_summary.csv").open(
         "w", newline="", encoding="utf-8"
