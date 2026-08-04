@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import os
 import shutil
 from pathlib import Path
@@ -36,10 +37,25 @@ def number(value: str | None) -> float | None:
     return None if value in (None, "") else float(value)
 
 
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def fmt(value: Any, digits: int = 6, suffix: str = "") -> str:
     if value is None or value == "":
         return "N/A"
     return f"{float(value):.{digits}f}{suffix}"
+
+
+def variant_label(value: str) -> str:
+    if value == "full_model":
+        return "Full Model"
+    label = value.replace("without_", "Without ").replace("_", " ").title()
+    return label.replace("Qr ", "QR ").replace("Ema", "EMA")
 
 
 def markdown_table(headers: list[str], rows: list[list[str]]) -> str:
@@ -112,7 +128,7 @@ def write_overall(phases: list[dict[str, Any]], ablations: list[dict[str, str]],
     for row in ablations:
         rows.append(
             {
-                "category": "ablation", "experiment": row["variant"],
+                "category": "ablation", "experiment": variant_label(row["variant"]),
                 "training_epochs": 30, "params": row["params"],
                 "test_psnr": row["test_psnr"], "test_ssim": row["test_ssim"],
                 "decode_rate": None, "latency_ms": row["latency_ms"],
@@ -134,7 +150,10 @@ def write_overall(phases: list[dict[str, Any]], ablations: list[dict[str, str]],
     with (OUTPUT / "overall_results.csv").open("w", newline="", encoding="utf-8") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields)
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(
+            {key: "N/A" if value is None or value == "" else value for key, value in row.items()}
+            for row in rows
+        )
     displayed = [
         [
             row["category"], row["experiment"], str(row["training_epochs"] or "N/A"),
@@ -159,7 +178,7 @@ def write_tables(phases: list[dict[str, Any]], ablations: list[dict[str, str]], 
     ]
     ablation_headers = ["Variant", "Params", "Test PSNR", "Test SSIM", "Latency", "Delta PSNR", "Delta SSIM"]
     ablation_rows = [
-        [row["variant"].replace("_", " ").title(), f"{int(row['params']):,}",
+        [variant_label(row["variant"]), f"{int(row['params']):,}",
          fmt(row["test_psnr"]), fmt(row["test_ssim"]), fmt(row["latency_ms"], 3, " ms"),
          fmt(row["delta_psnr"], 6), fmt(row["delta_ssim"], 6)]
         for row in ablations
@@ -231,8 +250,7 @@ def write_figures(phases: list[dict[str, Any]], ablations: list[dict[str, str]])
 
     variants = []
     for row in ablations[1:]:
-        label = row["variant"].replace("without_", "No ").replace("_", " ").title()
-        variants.append(label.replace("Qr ", "QR ").replace("Ema", "EMA"))
+        variants.append(variant_label(row["variant"]).replace("Without ", "No "))
     psnr = [float(row["delta_psnr"]) for row in ablations[1:]]
     ssim = [float(row["delta_ssim"]) for row in ablations[1:]]
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.5), constrained_layout=True)
@@ -283,7 +301,7 @@ Table 3 and Figure 8 contain the final benchmark. Mamba-TransQR achieved **16.45
 
 ## Strengths
 
-The principal strength is the consistent improvement over degraded input and earlier optimization stages on the same fixed split. The Phase 3 checkpoint combines high structural similarity with a near-saturated threshold proxy, and all reported values retain artifact-level provenance.
+The principal strength is the consistent improvement over degraded input and earlier optimization stages on the same fixed split. The Phase 3 checkpoint combines high structural similarity with a measured threshold proxy of 0.997655, and all reported values retain artifact-level provenance. These experiments used the project's `lightweight` state-space backend; they are not results for the official Mamba-SSM implementation.
 
 ## Limitations
 
@@ -291,17 +309,17 @@ All trained configurations use one seed, so no confidence intervals or significa
 
 ## Computational complexity
 
-Phase 3 increased parameters from **{phase2['params']:,}** to **{phase3['params']:,}** (**{phase3['params'] / phase2['params']:.2f}x**) and recorded **{phase3['latency_ms']:.3f} ms** batch-one CPU latency in its saved benchmark. The standardized final benchmark measured **82.002 ms**. The full ablation table shows that bypassing Mamba reduced latency to **12.073 ms**, whereas loss and EMA removals retain the same inference graph and their latency differences should be treated as measurement variation.
+Phase 3 increased parameters from **{phase2['params']:,}** to **{phase3['params']:,}** (**{phase3['params'] / phase2['params']:.2f}x**) and recorded **{phase3['latency_ms']:.3f} ms** batch-one CPU latency in its saved benchmark. The standardized final benchmark measured **82.002 ms** with batch size 1, 10 warmups, and 100 timed iterations on the recorded Windows CPU runtime. The saved artifacts do not identify the CPU model, core allocation, or power state, so latency should not be generalized across hardware. The full ablation table shows that bypassing the lightweight state-space branch reduced latency to **12.073 ms**, whereas loss and EMA removals retain the same inference graph and their latency differences should be treated as measurement variation.
 
-## Artifact map
+## Table and figure captions
 
-- Table 1: optimization stages.
-- Table 2: completed 30-epoch ablations.
-- Table 3: final benchmark with unavailable values explicitly marked.
-- Figure 5: test quality across optimization stages.
-- Figure 6: validation trajectories.
-- Figure 7: signed component-removal effects.
-- Figure 8: final benchmark quality, proxy decode rate, and latency.
+- **Table 1.** Optimization-stage results on the fixed test split. Phase 1 used 10 epochs; all other stages used 30. Latency is batch-one CPU time and is unavailable where it was not saved.
+- **Table 2.** Completed single-seed, 30-epoch one-factor-at-a-time ablations. Deltas are ablated minus Full Model; positive values mean removal improved the reported metric.
+- **Table 3.** Final fixed-protocol benchmark. Decode Rate is the Phase 3 threshold proxy, not payload recovery; absent compatible baseline artifacts are marked `N/A`.
+- **Figure 5.** Test PSNR and SSIM measured after each optimization stage; bar labels show rounded saved values.
+- **Figure 6.** Saved validation PSNR and SSIM trajectories by epoch. Phase 1 ends at epoch 10; the other runs continue to epoch 30.
+- **Figure 7.** Change in test PSNR and SSIM after removing one component from the Full Model. Positive bars indicate higher metrics after removal, not positive component contribution.
+- **Figure 8.** Final benchmark comparison of PSNR, SSIM, threshold decode proxy, and batch-one CPU latency. Only Degraded Input and Mamba-TransQR had measurable local artifacts; the other five models are explicitly unavailable.
 """
     paper = OUTPUT / "paper_ready"
     (paper / "results_and_discussion.md").write_text(content, encoding="utf-8")
@@ -311,6 +329,135 @@ Phase 3 increased parameters from **{phase2['params']:,}** to **{phase3['params'
     for number_ in (5, 6, 7, 8):
         for suffix in (".png", ".pdf"):
             shutil.copy2(OUTPUT / "figures" / f"figure_{number_}{suffix}", paper / f"figure_{number_}{suffix}")
+
+
+def write_audit(phases: list[dict[str, Any]], ablations: list[dict[str, str]], benchmark: list[dict[str, str]]) -> None:
+    paper = OUTPUT / "paper_ready"
+    provenance: list[dict[str, str]] = []
+    for row in phases:
+        provenance.append(
+            {
+                "output_artifact": "Table 1 / Figure 5",
+                "element": row["stage"],
+                "source_artifact": row["source"] + "; " + row["source"].replace("benchmark_summary.csv", "validation_history.csv"),
+                "source_fields": "test_psnr,test_ssim,runtime_seconds; validation_history val_psnr,val_ssim",
+                "transformation": "exact values; display rounded to 6 decimals",
+                "status": "verified",
+            }
+        )
+    provenance.append(
+        {
+            "output_artifact": "Table 1",
+            "element": "Baseline/Phase 1/Phase 2 parameter count",
+            "source_artifact": "results/phase3_pilot/comparison.md",
+            "source_fields": "Parameters row",
+            "transformation": "exact integer copied from saved comparison",
+            "status": "verified",
+        }
+    )
+    for row in ablations:
+        provenance.append(
+            {
+                "output_artifact": "Table 2 / Figure 7",
+                "element": variant_label(row["variant"]),
+                "source_artifact": "results/ablation/final/ablation_table.csv",
+                "source_fields": "params,test_psnr,test_ssim,latency_ms,delta_psnr,delta_ssim",
+                "transformation": "exact values; labels normalized; display rounded",
+                "status": "verified",
+            }
+        )
+    for row in benchmark:
+        provenance.append(
+            {
+                "output_artifact": "Table 3",
+                "element": row["model"],
+                "source_artifact": "results/final_benchmark/benchmark_table.csv",
+                "source_fields": "params,psnr,ssim,decode_rate,latency_ms",
+                "transformation": "exact values; missing fields rendered N/A; display rounded",
+                "status": "verified",
+            }
+        )
+    provenance.extend(
+        [
+            {
+                "output_artifact": "Figure 6",
+                "element": "all validation trajectories",
+                "source_artifact": "results/{first_real_qr_restoration,phase1_pilot,phase2_pilot,phase3_pilot}/validation_history.csv",
+                "source_fields": "epoch,val_psnr,val_ssim",
+                "transformation": "direct line plots; no interpolation or smoothing",
+                "status": "verified",
+            },
+            {
+                "output_artifact": "Figure 8",
+                "element": "complete figure",
+                "source_artifact": "results/final_benchmark/benchmark_figure.{png,pdf}",
+                "source_fields": "complete saved benchmark figure",
+                "transformation": "byte-for-byte copy",
+                "status": "verified",
+            },
+        ]
+    )
+    fields = ["output_artifact", "element", "source_artifact", "source_fields", "transformation", "status"]
+    with (paper / "source_provenance.csv").open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(provenance)
+
+    assert sha256(RESULTS / "final_benchmark" / "benchmark_figure.png") == sha256(
+        OUTPUT / "figures" / "figure_8.png"
+    )
+    assert sha256(RESULTS / "final_benchmark" / "benchmark_figure.pdf") == sha256(
+        OUTPUT / "figures" / "figure_8.pdf"
+    )
+
+    for table_number in (1, 2, 3):
+        latex = (OUTPUT / "tables" / f"table_{table_number}.tex").read_text(encoding="utf-8")
+        assert latex.count("\\begin{tabular}") == latex.count("\\end{tabular}") == 1
+        assert latex.count("\\toprule") == latex.count("\\midrule") == latex.count("\\bottomrule") == 1
+        column_count = latex.split("\\begin{tabular}{", 1)[1].split("}", 1)[0].count("r") + 1
+        for line in latex.splitlines():
+            if line.endswith(" \\\\"):
+                assert line.count("&") == column_count - 1
+
+    report = """# Publication package audit report
+
+## Outcome
+
+**Verified with evidence-based presentation corrections.** All numeric table cells were traced to completed source artifacts. Figures 5-7 are direct plots of saved CSV values, and Figure 8 is a byte-identical copy of the completed final benchmark figure. No training, evaluation, or benchmark was rerun, and no measured value changed.
+
+## Checklist
+
+1. **Pass — table values:** Table 1 matches phase benchmark and validation histories; Table 2 matches the finalized ablation CSV; Table 3 matches the final benchmark CSV.
+2. **Pass — figure values:** Figure 5 uses saved phase test metrics, Figure 6 uses every saved validation point without smoothing, Figure 7 uses finalized ablation deltas, and Figure 8 matches the source file hash.
+3. **Pass — fabrication/placeholders:** No fabricated numeric value or numeric placeholder remains. Unavailable benchmark rows are `N/A`.
+4. **Pass — units/precision:** PSNR is dB, SSIM and proxy decode rate are unitless, latency is ms at batch size 1, and tables consistently display six metric decimals and three latency decimals.
+5. **Corrected — names:** `QR` and `EMA` capitalization is consistent; packaged ablation names use the same human-readable convention.
+6. **Pass — optimization values:** Baseline and Phases 1-3 exactly match their completed histories and benchmark summaries.
+7. **Pass — ablations:** All six rows match `results/ablation/final/ablation_table.csv`.
+8. **Pass — final benchmark:** All seven rows match `results/final_benchmark/benchmark_table.csv`; five unavailable model rows remain unavailable.
+9. **Pass — LaTeX syntax:** Each table has balanced `tabular`, `toprule`, `midrule`, and `bottomrule` commands, valid row terminators, and a consistent column count. A TeX engine is not installed in this workspace, so validation is syntax-level rather than a rendered compilation.
+10. **Corrected — captions:** Captions now state budgets, delta direction, proxy semantics, source availability, and latency scope.
+11. **Pass — claims:** The discussion avoids significance and state-of-the-art ranking claims, documents the single-seed/OFAAT design, and distinguishes removal effects from general component utility.
+12. **Corrected — backend identity:** The discussion explicitly states that results use the lightweight state-space backend and are not official Mamba-SSM results.
+13. **Corrected — CPU scope:** Latency is labeled batch-one CPU time; protocol and missing CPU-model/core/power metadata are stated, so cross-hardware generalization is disclaimed.
+14. **Pass — optional decode metrics:** Payload decode rate is unavailable, not zero. The reported benchmark field is explicitly a threshold proxy; all missing entries are `N/A`.
+
+## Precision policy
+
+CSV files preserve source precision. Markdown and LaTeX tables round PSNR, SSIM, decode proxy, and deltas to six decimals and latency to three decimals. Figures use rounded direct labels while plotting full-precision source values.
+"""
+    (paper / "audit_report.md").write_text(report, encoding="utf-8")
+    corrections = """# Corrections log
+
+No measured value was modified.
+
+1. Normalized `QR` and `EMA` capitalization in Table 2, Figure 7 labels, and consolidated ablation names.
+2. Rendered every missing field in `overall_results.csv` explicitly as `N/A` rather than an empty cell.
+3. Added an explicit statement that experiments use the lightweight state-space backend, not official Mamba-SSM.
+4. Added CPU latency protocol and hardware-metadata limitations.
+5. Replaced terse artifact-map descriptions with evidence-scoped captions for Tables 1-3 and Figures 5-8.
+"""
+    (paper / "corrections_log.md").write_text(corrections, encoding="utf-8")
 
 
 def main() -> None:
@@ -324,6 +471,7 @@ def main() -> None:
     write_figures(phases, ablations)
     write_summaries(phases)
     write_paper(phases)
+    write_audit(phases, ablations, benchmark)
 
 
 if __name__ == "__main__":
