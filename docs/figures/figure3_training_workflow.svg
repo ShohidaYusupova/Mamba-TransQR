@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">
+  <title>Training and Optimization Workflow of Mamba-TransQR</title>
+  <desc>The synthetic dataset is split into training, validation, and test sets. Mamba-TransQR is optimized with a five-term composite loss, AdamW, learning-rate warm-up, cosine decay, and EMA. Validation PSNR selects the best checkpoint for final test evaluation of PSNR, SSIM, decode rate, and latency.</desc>
+  <rect width="1200" height="1800" fill="#ffffff"/>
+  <style>
+    .title { font: 700 38px Arial, Helvetica, sans-serif; fill: #17233b; }
+    .subtitle { font: 400 18px Arial, Helvetica, sans-serif; fill: #5d6878; }
+    .main { font: 700 22px Arial, Helvetica, sans-serif; fill: #17233b; }
+    .small { font: 400 17px Arial, Helvetica, sans-serif; fill: #4d5b6d; }
+    .loss { font: 600 17px Arial, Helvetica, sans-serif; fill: #26364c; }
+    .metric { font: 700 20px Arial, Helvetica, sans-serif; fill: #17233b; }
+    .box { stroke: #46627f; stroke-width: 2.2; rx: 12; ry: 12; }
+    .arrow { stroke: #38536f; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+    .feedback { stroke: #91a0b0; stroke-width: 2; fill: none; stroke-dasharray: 8 7; stroke-linecap: round; }
+  </style>
+
+  <text x="600" y="70" text-anchor="middle" class="title">Training and Optimization Workflow of Mamba-TransQR</text>
+  <text x="600" y="106" text-anchor="middle" class="subtitle">Phase 3 optimization, checkpoint selection, and standardized final evaluation</text>
+
+  <rect x="390" y="145" width="420" height="78" fill="#edf4fb" class="box"/>
+  <text x="600" y="192" text-anchor="middle" class="main">Synthetic Dataset</text>
+
+  <path d="M600 223 L600 260" class="arrow"/><path d="M591 249 L600 261 L609 249" class="arrow"/>
+
+  <!-- deterministic partitions -->
+  <path d="M600 261 L600 280 M245 280 L955 280 M245 280 L245 303 M600 280 L600 303 M955 280 L955 303" class="arrow"/>
+  <rect x="105" y="305" width="280" height="76" fill="#eaf7f1" class="box"/>
+  <text x="245" y="351" text-anchor="middle" class="main">Train</text>
+  <rect x="460" y="305" width="280" height="76" fill="#fff7df" class="box"/>
+  <text x="600" y="351" text-anchor="middle" class="main">Validation</text>
+  <rect x="815" y="305" width="280" height="76" fill="#f1eef9" class="box"/>
+  <text x="955" y="351" text-anchor="middle" class="main">Test</text>
+
+  <!-- train stream into network -->
+  <path d="M245 381 L245 416 L600 416 L600 447" class="arrow"/><path d="M591 436 L600 448 L609 436" class="arrow"/>
+  <text x="282" y="407" class="small">training batches</text>
+
+  <rect x="390" y="450" width="420" height="82" fill="#dfeaf6" class="box"/>
+  <text x="600" y="499" text-anchor="middle" class="main">Mamba-TransQR Network</text>
+
+  <path d="M600 532 L600 569" class="arrow"/><path d="M591 558 L600 570 L609 558" class="arrow"/>
+
+  <!-- composite loss -->
+  <rect x="65" y="572" width="1070" height="260" fill="#f8fafc" stroke="#46627f" stroke-width="2.5" rx="18" ry="18"/>
+  <rect x="65" y="572" width="1070" height="67" fill="#f3effb" stroke="#46627f" stroke-width="2.5" rx="18" ry="18"/>
+  <path d="M65 622 L1135 622" stroke="#46627f" stroke-width="2.5"/>
+  <text x="600" y="614" text-anchor="middle" class="main">Composite QR Restoration Loss</text>
+
+  <rect x="94" y="676" width="188" height="76" fill="#ffffff" class="box"/>
+  <text x="188" y="707" text-anchor="middle" class="loss">Reconstruction</text><text x="188" y="731" text-anchor="middle" class="loss">Loss</text>
+  <rect x="300" y="676" width="188" height="76" fill="#ffffff" class="box"/>
+  <text x="394" y="720" text-anchor="middle" class="loss">SSIM Loss</text>
+  <rect x="506" y="676" width="188" height="76" fill="#ffffff" class="box"/>
+  <text x="600" y="720" text-anchor="middle" class="loss">Edge Loss</text>
+  <rect x="712" y="676" width="188" height="76" fill="#ffffff" class="box"/>
+  <text x="806" y="720" text-anchor="middle" class="loss">QRStructureLoss</text>
+  <rect x="918" y="676" width="188" height="76" fill="#ffffff" class="box"/>
+  <text x="1012" y="707" text-anchor="middle" class="loss">DecodeConsistency</text><text x="1012" y="731" text-anchor="middle" class="loss">Loss</text>
+  <text x="600" y="794" text-anchor="middle" class="small">Weighted sum used for backpropagation</text>
+
+  <path d="M600 832 L600 869" class="arrow"/><path d="M591 858 L600 870 L609 858" class="arrow"/>
+  <rect x="390" y="872" width="420" height="74" fill="#edf4fb" class="box"/>
+  <text x="600" y="917" text-anchor="middle" class="main">AdamW Optimizer</text>
+
+  <path d="M600 946 L600 983" class="arrow"/><path d="M591 972 L600 984 L609 972" class="arrow"/>
+  <rect x="390" y="986" width="420" height="74" fill="#edf4fb" class="box"/>
+  <text x="600" y="1031" text-anchor="middle" class="main">Learning Rate Warm-up</text>
+
+  <path d="M600 1060 L600 1097" class="arrow"/><path d="M591 1086 L600 1098 L609 1086" class="arrow"/>
+  <rect x="390" y="1100" width="420" height="74" fill="#edf4fb" class="box"/>
+  <text x="600" y="1145" text-anchor="middle" class="main">Cosine Decay Scheduler</text>
+
+  <path d="M600 1174 L600 1211" class="arrow"/><path d="M591 1200 L600 1212 L609 1200" class="arrow"/>
+  <rect x="390" y="1214" width="420" height="74" fill="#eaf7f1" class="box"/>
+  <text x="600" y="1259" text-anchor="middle" class="main">EMA</text>
+
+  <!-- validation feeds monitored selection -->
+  <path d="M600 1288 L600 1325" class="arrow"/><path d="M591 1314 L600 1326 L609 1314" class="arrow"/>
+  <path d="M600 381 L600 405 L40 405 L40 1364 L388 1364" class="feedback"/>
+  <path d="M378 1355 L390 1364 L378 1373" class="feedback"/>
+  <text x="23" y="861" text-anchor="middle" class="small" transform="rotate(-90 23 861)">validation split</text>
+  <rect x="390" y="1328" width="420" height="74" fill="#fff7df" class="box"/>
+  <text x="600" y="1373" text-anchor="middle" class="main">Validation PSNR</text>
+
+  <path d="M600 1402 L600 1439" class="arrow"/><path d="M591 1428 L600 1440 L609 1428" class="arrow"/>
+  <rect x="390" y="1442" width="420" height="74" fill="#f3effb" class="box"/>
+  <text x="600" y="1487" text-anchor="middle" class="main">Best Checkpoint</text>
+
+  <path d="M600 1516 L600 1553" class="arrow"/><path d="M591 1542 L600 1554 L609 1542" class="arrow"/>
+  <path d="M955 381 L955 405 L1160 405 L1160 1591 L812 1591" class="feedback"/>
+  <path d="M823 1582 L811 1591 L823 1600" class="feedback"/>
+  <text x="1177" y="974" text-anchor="middle" class="small" transform="rotate(90 1177 974)">held-out test split</text>
+  <rect x="390" y="1556" width="420" height="74" fill="#fff1e8" class="box"/>
+  <text x="600" y="1601" text-anchor="middle" class="main">Final Test Evaluation</text>
+
+  <path d="M600 1630 L600 1662 M165 1662 L1035 1662 M165 1662 L165 1683 M455 1662 L455 1683 M745 1662 L745 1683 M1035 1662 L1035 1683" class="arrow"/>
+  <rect x="60" y="1685" width="210" height="76" fill="#eaf7f1" class="box"/><text x="165" y="1731" text-anchor="middle" class="metric">PSNR</text>
+  <rect x="350" y="1685" width="210" height="76" fill="#eaf7f1" class="box"/><text x="455" y="1731" text-anchor="middle" class="metric">SSIM</text>
+  <rect x="640" y="1685" width="210" height="76" fill="#eaf7f1" class="box"/><text x="745" y="1731" text-anchor="middle" class="metric">Decode Rate</text>
+  <rect x="930" y="1685" width="210" height="76" fill="#eaf7f1" class="box"/><text x="1035" y="1731" text-anchor="middle" class="metric">Latency</text>
+</svg>

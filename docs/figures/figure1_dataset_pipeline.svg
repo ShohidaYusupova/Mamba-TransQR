@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800" viewBox="0 0 1200 1800">
+  <title>Synthetic Dataset Generation Pipeline</title>
+  <desc>Payloads are rendered as clean QR images, passed through a configurable synthetic degradation operator bank, paired with their clean targets, recorded with metadata and a dataset manifest, and assigned to train, validation, and test splits.</desc>
+  <rect width="1200" height="1800" fill="#ffffff"/>
+  <style>
+    .title { font: 700 40px Arial, Helvetica, sans-serif; fill: #17233b; }
+    .subtitle { font: 400 18px Arial, Helvetica, sans-serif; fill: #5d6878; }
+    .main { font: 700 23px Arial, Helvetica, sans-serif; fill: #17233b; }
+    .small { font: 400 17px Arial, Helvetica, sans-serif; fill: #4d5b6d; }
+    .operator { font: 600 18px Arial, Helvetica, sans-serif; fill: #26364c; }
+    .split { font: 700 21px Arial, Helvetica, sans-serif; fill: #17233b; }
+    .count { font: 400 18px Arial, Helvetica, sans-serif; fill: #4d5b6d; }
+    .box { stroke: #46627f; stroke-width: 2.2; rx: 12; ry: 12; }
+    .arrow { stroke: #38536f; stroke-width: 3; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  </style>
+
+  <text x="600" y="72" text-anchor="middle" class="title">Synthetic Dataset Generation Pipeline</text>
+  <text x="600" y="108" text-anchor="middle" class="subtitle">Deterministic clean/degraded QR pair construction and leakage-safe partitioning</text>
+
+  <!-- Payload -->
+  <rect x="390" y="150" width="420" height="82" fill="#edf4fb" class="box"/>
+  <text x="600" y="199" text-anchor="middle" class="main">Payload</text>
+
+  <!-- arrow -->
+  <path d="M600 232 L600 273" class="arrow"/>
+  <path d="M591 262 L600 274 L609 262" class="arrow"/>
+
+  <!-- QR generator -->
+  <rect x="390" y="275" width="420" height="82" fill="#edf4fb" class="box"/>
+  <text x="600" y="324" text-anchor="middle" class="main">QR Generator</text>
+
+  <path d="M600 357 L600 398" class="arrow"/>
+  <path d="M591 387 L600 399 L609 387" class="arrow"/>
+
+  <!-- Clean image -->
+  <rect x="390" y="400" width="420" height="92" fill="#eaf7f1" class="box"/>
+  <g transform="translate(420 419)" fill="#1e344b">
+    <rect width="54" height="54" fill="#ffffff" stroke="#9daaba" stroke-width="1.5"/>
+    <rect x="5" y="5" width="16" height="16"/><rect x="9" y="9" width="8" height="8" fill="#ffffff"/><rect x="11" y="11" width="4" height="4"/>
+    <rect x="33" y="5" width="16" height="16"/><rect x="37" y="9" width="8" height="8" fill="#ffffff"/><rect x="39" y="11" width="4" height="4"/>
+    <rect x="5" y="33" width="16" height="16"/><rect x="9" y="37" width="8" height="8" fill="#ffffff"/><rect x="11" y="39" width="4" height="4"/>
+    <rect x="26" y="25" width="5" height="5"/><rect x="34" y="27" width="5" height="5"/><rect x="43" y="25" width="6" height="6"/>
+    <rect x="25" y="36" width="7" height="5"/><rect x="36" y="36" width="5" height="7"/><rect x="45" y="42" width="4" height="7"/>
+  </g>
+  <text x="620" y="441" text-anchor="middle" class="main">Clean QR Image</text>
+  <text x="620" y="469" text-anchor="middle" class="small">Reference target</text>
+
+  <path d="M600 492 L600 533" class="arrow"/>
+  <path d="M591 522 L600 534 L609 522" class="arrow"/>
+
+  <!-- Degradation engine -->
+  <rect x="80" y="535" width="1040" height="590" fill="#f8fafc" stroke="#46627f" stroke-width="2.5" rx="18" ry="18"/>
+  <rect x="80" y="535" width="1040" height="74" fill="#dfeaf6" stroke="#46627f" stroke-width="2.5" rx="18" ry="18"/>
+  <path d="M80 590 L1120 590" stroke="#46627f" stroke-width="2.5"/>
+  <text x="600" y="579" text-anchor="middle" class="main">Synthetic Degradation Engine</text>
+  <text x="600" y="637" text-anchor="middle" class="small">Configurable operator bank (operators selected and composed per sample)</text>
+
+  <!-- operator bank -->
+  <g>
+    <rect x="125" y="673" width="290" height="66" fill="#ffffff" class="box"/><text x="270" y="713" text-anchor="middle" class="operator">Gaussian Noise</text>
+    <rect x="455" y="673" width="290" height="66" fill="#ffffff" class="box"/><text x="600" y="713" text-anchor="middle" class="operator">Motion Blur</text>
+    <rect x="785" y="673" width="290" height="66" fill="#ffffff" class="box"/><text x="930" y="713" text-anchor="middle" class="operator">Gaussian Blur</text>
+
+    <rect x="125" y="766" width="290" height="66" fill="#ffffff" class="box"/><text x="270" y="806" text-anchor="middle" class="operator">Perspective Warp</text>
+    <rect x="455" y="766" width="290" height="66" fill="#ffffff" class="box"/><text x="600" y="806" text-anchor="middle" class="operator">Rotation</text>
+    <rect x="785" y="766" width="290" height="66" fill="#ffffff" class="box"/><text x="930" y="806" text-anchor="middle" class="operator">Illumination Change</text>
+
+    <rect x="125" y="859" width="290" height="66" fill="#ffffff" class="box"/><text x="270" y="899" text-anchor="middle" class="operator">JPEG Compression</text>
+    <rect x="455" y="859" width="290" height="66" fill="#ffffff" class="box"/><text x="600" y="899" text-anchor="middle" class="operator">Partial Occlusion</text>
+    <rect x="785" y="859" width="290" height="66" fill="#ffffff" class="box"/><text x="930" y="899" text-anchor="middle" class="operator">Random Masks</text>
+
+    <rect x="290" y="952" width="290" height="66" fill="#ffffff" class="box"/><text x="435" y="992" text-anchor="middle" class="operator">Scratches</text>
+    <rect x="620" y="952" width="290" height="66" fill="#ffffff" class="box"/><text x="765" y="992" text-anchor="middle" class="operator">Contrast Reduction</text>
+  </g>
+  <text x="600" y="1070" text-anchor="middle" class="small">Seeded sampling preserves reproducibility and records operator provenance</text>
+
+  <path d="M600 1125 L600 1166" class="arrow"/>
+  <path d="M591 1155 L600 1167 L609 1155" class="arrow"/>
+
+  <!-- Degraded image -->
+  <rect x="390" y="1168" width="420" height="92" fill="#fff1e8" class="box"/>
+  <g transform="translate(420 1187)" fill="#536170">
+    <rect width="54" height="54" fill="#eef0f2" stroke="#9daaba" stroke-width="1.5"/>
+    <rect x="5" y="5" width="16" height="16" opacity=".82"/><rect x="9" y="9" width="8" height="8" fill="#eef0f2"/><rect x="11" y="11" width="4" height="4"/>
+    <rect x="33" y="5" width="16" height="16" opacity=".68"/><rect x="37" y="9" width="8" height="8" fill="#eef0f2"/>
+    <rect x="5" y="33" width="16" height="16" opacity=".75"/><rect x="9" y="37" width="8" height="8" fill="#eef0f2"/>
+    <rect x="26" y="25" width="6" height="5"/><rect x="37" y="29" width="8" height="6" opacity=".55"/><rect x="28" y="39" width="5" height="8"/>
+    <path d="M2 47 L50 19" stroke="#ffffff" stroke-width="4" opacity=".8"/>
+  </g>
+  <text x="620" y="1209" text-anchor="middle" class="main">Degraded QR Image</text>
+  <text x="620" y="1237" text-anchor="middle" class="small">Synthetic input</text>
+
+  <path d="M600 1260 L600 1301" class="arrow"/>
+  <path d="M591 1290 L600 1302 L609 1290" class="arrow"/>
+
+  <rect x="390" y="1303" width="420" height="82" fill="#edf4fb" class="box"/>
+  <text x="600" y="1352" text-anchor="middle" class="main">Paired Dataset Generator</text>
+
+  <path d="M600 1385 L600 1426" class="arrow"/>
+  <path d="M591 1415 L600 1427 L609 1415" class="arrow"/>
+
+  <rect x="330" y="1428" width="540" height="92" fill="#f3effb" class="box"/>
+  <text x="600" y="1469" text-anchor="middle" class="main">Metadata + Dataset Manifest</text>
+  <text x="600" y="1497" text-anchor="middle" class="small">Pair paths, payload, degradation provenance, and split</text>
+
+  <!-- split fan-out -->
+  <path d="M600 1520 L600 1562 M225 1562 L975 1562 M225 1562 L225 1592 M600 1562 L600 1592 M975 1562 L975 1592" class="arrow"/>
+  <path d="M216 1581 L225 1593 L234 1581" class="arrow"/>
+  <path d="M591 1581 L600 1593 L609 1581" class="arrow"/>
+  <path d="M966 1581 L975 1593 L984 1581" class="arrow"/>
+
+  <rect x="80" y="1595" width="290" height="105" fill="#eaf7f1" class="box"/>
+  <text x="225" y="1640" text-anchor="middle" class="split">Train</text>
+  <text x="225" y="1673" text-anchor="middle" class="count">7,000 pairs</text>
+
+  <rect x="455" y="1595" width="290" height="105" fill="#fff7df" class="box"/>
+  <text x="600" y="1640" text-anchor="middle" class="split">Validation</text>
+  <text x="600" y="1673" text-anchor="middle" class="count">1,500 pairs</text>
+
+  <rect x="830" y="1595" width="290" height="105" fill="#f1eef9" class="box"/>
+  <text x="975" y="1640" text-anchor="middle" class="split">Test</text>
+  <text x="975" y="1673" text-anchor="middle" class="count">1,500 pairs</text>
+
+  <text x="600" y="1752" text-anchor="middle" class="small">10,000 paired images | deterministic 70 / 15 / 15 payload-isolated split</text>
+</svg>
