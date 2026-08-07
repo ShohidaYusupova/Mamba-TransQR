@@ -43,6 +43,7 @@ COMPONENTS = {
     "without_ema": "EMA",
     "without_refinement_decoder": "Refinement decoder",
 }
+BASE_GIT_COMMIT = "b8fee1fcbc2da8fa39a78ce4b2a183e0c8bdfdbc"
 
 
 def _csv_row(path: Path) -> dict[str, str]:
@@ -160,7 +161,11 @@ def write_tables(rows: list[dict[str, Any]]) -> None:
         for row in rows
     )
     (OUTPUT / "ablation_table.tex").write_text(
-        "\\begin{tabular}{lrrrrrr}\n\\toprule\nVariant & Params & Test PSNR & Test SSIM & Latency (ms) & $\\Delta$PSNR & $\\Delta$SSIM \\\\n\\midrule\n"
+        "\\begin{tabular}{lrrrrrr}\n\\toprule\n"
+        "Variant & Params & Test PSNR & Test SSIM & Latency (ms) & "
+        "$\\Delta$PSNR & $\\Delta$SSIM "
+        + "\\\\\n"
+        + "\\midrule\n"
         + latex
         + "\n\\bottomrule\n\\end{tabular}\n",
         encoding="utf-8",
@@ -357,6 +362,128 @@ def write_reproducibility(rows: list[dict[str, Any]]) -> None:
     )
 
 
+def write_unified_outputs(rows: list[dict[str, Any]]) -> None:
+    """Write the unified six-row deliverables and verify scratch-run budgets."""
+    if any(row["epochs"] != 30 for row in rows):
+        raise ValueError("every unified ablation row must contain exactly 30 epochs")
+    scratch_variants = (
+        "without_decode_consistency_loss",
+        "without_ema",
+        "without_refinement_decoder",
+    )
+    for variant in scratch_variants:
+        metadata = json.loads(
+            (SOURCE / variant / "run_metadata.json").read_text(encoding="utf-8")
+        )
+        if metadata.get("resume", {}).get("resumed") is not False:
+            raise ValueError(f"{variant} was not a verified scratch run")
+
+    for suffix in (".md", ".csv", ".tex"):
+        (SOURCE / f"ablation_table{suffix}").write_bytes(
+            (OUTPUT / f"ablation_table{suffix}").read_bytes()
+        )
+    manifest_hash = _sha256(
+        ROOT / "datasets" / "first_real_qr_10k" / "dataset_manifest.csv"
+    )
+    fields = (
+        "variant",
+        "training_epochs",
+        "params",
+        "test_psnr",
+        "test_ssim",
+        "latency_ms",
+        "git_commit",
+        "configuration_hash",
+        "checkpoint_hash",
+        "dataset_manifest_hash",
+        "backend_identity",
+    )
+    with (SOURCE / "ablation_summary.csv").open(
+        "w", newline="", encoding="utf-8"
+    ) as stream:
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(
+                {
+                    "variant": row["variant"],
+                    "training_epochs": row["epochs"],
+                    "params": row["params"],
+                    "test_psnr": row["test_psnr"],
+                    "test_ssim": row["test_ssim"],
+                    "latency_ms": row["latency_ms"],
+                    "git_commit": BASE_GIT_COMMIT,
+                    "configuration_hash": row["config_hash"],
+                    "checkpoint_hash": row["checkpoint_hash"],
+                    "dataset_manifest_hash": manifest_hash,
+                    "backend_identity": row["backend"],
+                }
+            )
+
+    identity_rows = "\n".join(
+        f"| {row['label']} | {row['epochs']} | `{BASE_GIT_COMMIT}` | `{row['config_hash']}` | `{row['checkpoint_hash']}` | `{manifest_hash}` | `{row['backend']}` |"
+        for row in rows
+    )
+    comparison = f"""# Unified 30-epoch ablation comparison
+
+All six rows use the same fixed 7,000/1,500/1,500 split of the 10,000-pair dataset, seed 42, batch size 16, AdamW optimizer, two-epoch warmup followed by cosine decay, best-validation-PSNR checkpoint selection, held-out test evaluation, and batch-one latency with 10 warmups plus 100 timed iterations.
+
+The three newly requested variants were trained from epoch 1 with `--resume never`; each `run_metadata.json` records `resumed: false`. No path under `results/ablation_pilot` or `checkpoints/ablation_pilot` was used. Pre-rerun artifacts were preserved separately under `results/ablation_pre_rerun` and `checkpoints/ablation_pre_rerun`.
+
+{(OUTPUT / 'ablation_table.md').read_text(encoding='utf-8')}
+
+## Reproducibility identities
+
+The Git field is the recorded Phase 3 base implementation commit shared by the controlled recipes.
+
+| Variant | Epochs | Git commit | Configuration SHA-256 | Checkpoint SHA-256 | Dataset manifest SHA-256 | Backend |
+| --- | ---: | --- | --- | --- | --- | --- |
+{identity_rows}
+
+## Budget verification
+
+Every row contains exactly 30 saved training-history epochs. The unified outputs exclude the separate 15-epoch pilot directory entirely.
+"""
+    (SOURCE / "comparison.md").write_text(comparison, encoding="utf-8")
+
+    by_variant = {row["variant"]: row for row in rows}
+    full = by_variant["full_model"]
+    no_mamba = by_variant["without_mamba"]
+    no_structure = by_variant["without_qr_structure_loss"]
+    no_decode = by_variant["without_decode_consistency_loss"]
+    no_ema = by_variant["without_ema"]
+    no_refinement = by_variant["without_refinement_decoder"]
+    report = f"""# Controlled 30-epoch ablation report
+
+## Scope
+
+The main publication analysis contains only the six controlled 30-epoch runs shown below. All use the same 10,000-pair dataset and fixed 7,000/1,500/1,500 split, seed 42, batch size 16, AdamW settings, two-epoch warmup plus cosine decay, best-validation-PSNR checkpoint selection, test protocol, and batch-one latency protocol with 10 warmups and 100 timed iterations. The three rerun variants started at epoch 1 with `--resume never`; their metadata records `resumed: false`.
+
+The 15-epoch pilot artifacts remain archived under `results/ablation_pilot/` and `checkpoints/ablation_pilot/` for provenance. They are not read by this aggregation and do not appear in the publication table or conclusions.
+
+{(OUTPUT / 'ablation_table.md').read_text(encoding='utf-8')}
+
+## Findings
+
+The Full Model was not the best-performing configuration under this controlled protocol: it recorded **{full['test_psnr']:.6f} dB** test PSNR and **{full['test_ssim']:.6f}** test SSIM, the lowest values among the six configurations.
+
+Removing the refinement decoder produced the highest measured test PSNR and SSIM: **{no_refinement['test_psnr']:.6f} dB** and **{no_refinement['test_ssim']:.6f}**. These are changes of **{no_refinement['delta_psnr']:+.6f} dB** and **{no_refinement['delta_ssim']:+.6f}** relative to the Full Model.
+
+Removing the lightweight state-space branch slightly improved test PSNR/SSIM to **{no_mamba['test_psnr']:.6f} dB**/**{no_mamba['test_ssim']:.6f}** while strongly reducing measured CPU latency from **{full['latency_ms']:.3f} ms** to **{no_mamba['latency_ms']:.3f} ms**. The bypass retains the branch parameters, so this is a branch-compute ablation rather than a parameter-matched redesign.
+
+QRStructureLoss, DecodeConsistencyLoss, and EMA did not improve PSNR or SSIM under this controlled configuration. Removing them changed test PSNR by **{no_structure['delta_psnr']:+.6f} dB**, **{no_decode['delta_psnr']:+.6f} dB**, and **{no_ema['delta_psnr']:+.6f} dB**, respectively; the corresponding SSIM changes were **{no_structure['delta_ssim']:+.6f}**, **{no_decode['delta_ssim']:+.6f}**, and **{no_ema['delta_ssim']:+.6f}**.
+
+Together, the uniformly positive removal deltas indicate interaction effects and possible over-regularization in the Full Model at this seed and training budget. This one-factor-at-a-time, single-seed study cannot isolate component interactions or establish statistical significance, and PSNR/SSIM do not fully represent QR payload recovery or robustness.
+
+All runs used the project's `lightweight` state-space backend. These findings must not be generalized to the official `mamba-ssm` implementation.
+
+## Reproducibility
+
+Full configuration, checkpoint, dataset-manifest, base Git commit, backend, and 30-epoch budget identities for every row are recorded in `ablation_summary.csv` and `comparison.md`. No measured value was estimated or altered during aggregation.
+"""
+    (SOURCE / "ablation_report.md").write_text(report, encoding="utf-8")
+
+
 def main() -> None:
     OUTPUT.mkdir(parents=True, exist_ok=True)
     rows = collect()
@@ -365,6 +492,7 @@ def main() -> None:
     write_component_contribution(rows)
     write_statistical_summary(rows)
     write_reproducibility(rows)
+    write_unified_outputs(rows)
 
 
 if __name__ == "__main__":
