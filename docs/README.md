@@ -9,6 +9,7 @@
 - [Core APIs](core.md)
 - [Repository audit](repository_audit.md)
 - [Without-Mamba parameter-count audit](without_mamba_parameter_audit.md)
+- [PeerJ archival release readiness audit](peerj_release_readiness_audit.md)
 - [Optimization plan](optimization_plan.md)
 
 The reproducibility guide is the entry point for the completed baseline,
