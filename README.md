@@ -13,6 +13,10 @@ publication-package audit. See the
 [reproducibility guide](docs/reproducibility.md) for artifact provenance,
 commands, backend identity, and interpretation limits.
 
+The confirmed software author is **Shohida Yusupova**. Citation metadata is in
+[`CITATION.cff`](CITATION.cff); no ORCID is recorded because none was verified
+from repository evidence.
+
 ## Requirements
 
 - Python 3.11 or later
@@ -212,6 +216,42 @@ The completed Phase 3 and ablation experiments used the non-official
 `lightweight` state-space backend. They must not be described as measurements
 of the official Mamba-SSM implementation. Missing compatible CNN/Transformer
 benchmark checkpoints remain `N/A`; they were not estimated or substituted.
+
+## PeerJ reproducibility
+
+The archival package is defined by the
+[PeerJ archival manifest](docs/peerj_archival_manifest.md). Large datasets and
+checkpoints are intentionally excluded from Git history and will be supplied
+as versioned archival-release/Zenodo supplementary assets. After restoring
+that bundle at the repository-relative paths recorded in the manifest:
+
+```bash
+python -m pip install -r requirements-peerj-lock.txt
+python -m pip install --no-deps -e .
+python scripts/generate_qr_dataset.py --config configs/first_real_qr_10k_dataset.yaml --output datasets/first_real_qr_10k
+python scripts/train_qr_restoration.py --config configs/phase3_pilot.yaml
+python scripts/run_phase4_ablation.py --mode train-remaining --resume never
+python scripts/finalize_ablation_study.py
+python scripts/run_final_benchmark.py
+python scripts/prepare_final_analysis.py
+```
+
+These commands are destructive to same-named output paths; run them only in a
+new reproduction workspace. Dataset generation and training are not required when verifying the deposited
+dataset and checkpoints: verify their SHA-256 values from the manifest, then
+run only the finalization/benchmark commands. The controlled study is a
+single-seed, 30-epoch, one-factor-at-a-time ablation. Expected compact outputs
+include `results/phase3_pilot/benchmark_summary.csv`,
+`results/ablation/final/ablation_table.csv`,
+`results/final_benchmark/benchmark_table.csv`, and the publication tables and
+figures under `results/final_analysis/paper_ready/`.
+
+The reported CPU experiments set `mamba_backend: lightweight`, which selects
+the repository's `LightweightStateSpaceBlock`. This is not the optional
+official `mamba-ssm` implementation, and the archived measurements do not
+claim reproducibility for that backend. See
+[the reproducibility guide](docs/reproducibility.md) for hardware provenance,
+verification commands, and known archival limitations.
 
 ## Project layout
 

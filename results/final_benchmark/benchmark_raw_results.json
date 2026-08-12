@@ -1,0 +1,58 @@
+[
+  {
+    "model": "Degraded Input",
+    "params": 0,
+    "psnr": 10.61706262953738,
+    "ssim": 0.703518291103079,
+    "decode_rate": 0.6246711386645094,
+    "latency_ms": 0.0023110047914087772
+  },
+  {
+    "model": "SRCNN",
+    "params": null,
+    "psnr": null,
+    "ssim": null,
+    "decode_rate": null,
+    "latency_ms": null
+  },
+  {
+    "model": "ESPCN",
+    "params": null,
+    "psnr": null,
+    "ssim": null,
+    "decode_rate": null,
+    "latency_ms": null
+  },
+  {
+    "model": "VDSR",
+    "params": null,
+    "psnr": null,
+    "ssim": null,
+    "decode_rate": null,
+    "latency_ms": null
+  },
+  {
+    "model": "EDSR",
+    "params": null,
+    "psnr": null,
+    "ssim": null,
+    "decode_rate": null,
+    "latency_ms": null
+  },
+  {
+    "model": "SwinIR",
+    "params": null,
+    "psnr": null,
+    "ssim": null,
+    "decode_rate": null,
+    "latency_ms": null
+  },
+  {
+    "model": "Mamba-TransQR",
+    "params": 1476259,
+    "psnr": 16.4523534166052,
+    "ssim": 0.9503737294927557,
+    "decode_rate": 0.9976546637555386,
+    "latency_ms": 82.00225600623526
+  }
+]

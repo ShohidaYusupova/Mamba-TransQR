@@ -1,0 +1,58 @@
+{
+  "git_commit": "b8fee1fcbc2da8fa39a78ce4b2a183e0c8bdfdbc",
+  "base_configuration_hash": "912d56d411ebc9742fba4ce7ec3fabae4072d8c51a932fa8f52fa25d52a5a470",
+  "dataset_manifest_hash": "2c47950acb452137b3634bb3527cd48f3554b18f3416cd9c8cc7a1422df45c2f",
+  "seed": 42,
+  "latency_protocol": {
+    "batch_size": 1,
+    "warmup": 10,
+    "iterations": 100
+  },
+  "platform": "Windows-10-10.0.19045-SP0",
+  "python": "3.12.13 (main, Mar  3 2026, 15:01:35) [MSC v.1944 64 bit (AMD64)]",
+  "torch": "2.13.0+cpu",
+  "variants": [
+    {
+      "variant": "full_model",
+      "status": "reused",
+      "configuration_hash": "912d56d411ebc9742fba4ce7ec3fabae4072d8c51a932fa8f52fa25d52a5a470",
+      "checkpoint_hash": "a0e1abf2c3241a360dc7f5a66936aa838ad5d170a2c4a2cc44db1b98ee7099d6",
+      "backend_identity": "{\"mamba_backend\": \"lightweight\", \"mamba_implementation\": \"lightweight_state_space\", \"mamba_ssm_version\": null}"
+    },
+    {
+      "variant": "without_mamba",
+      "status": "completed",
+      "configuration_hash": "4ccb669bb9f463bf4635ef7b6fa6e001e4e95eaa416b8b9358e29308bb2e7182",
+      "checkpoint_hash": "2e172078ae467debafdbe7a7b4d1ab41fe91086d4fb7c55f6237ed70539ff9f6",
+      "backend_identity": "{\"mamba_backend\": \"lightweight\", \"mamba_implementation\": \"lightweight_state_space\", \"mamba_ssm_version\": null}"
+    },
+    {
+      "variant": "without_qr_structure_loss",
+      "status": "completed",
+      "configuration_hash": "703dc6c53479288163baa9612ec2dadd04d2f4ce9e25a26bbbedfdb835cf6a05",
+      "checkpoint_hash": "f2f45dd5707c52270cf4c79c19167bac943b30a18fc4f5788b9cec25c05bcf99",
+      "backend_identity": "{\"mamba_backend\": \"lightweight\", \"mamba_implementation\": \"lightweight_state_space\", \"mamba_ssm_version\": null}"
+    },
+    {
+      "variant": "without_decode_consistency_loss",
+      "status": "completed",
+      "configuration_hash": "4fc78dc1acd76309eb4543e77f4c34d03440968e8e4ddb0d337601bfc3321f4c",
+      "checkpoint_hash": "a9f53d7d466e71b35932fa4fec96c2a497eea019bdf8e283abb4b1d6e1169500",
+      "backend_identity": "{\"mamba_backend\": \"lightweight\", \"mamba_implementation\": \"lightweight_state_space\", \"mamba_ssm_version\": null}"
+    },
+    {
+      "variant": "without_ema",
+      "status": "completed",
+      "configuration_hash": "08b3f1fb1846e80d1ac9a976a80341390f895c63ecc1cb0918bf344d47903933",
+      "checkpoint_hash": "bf3f32fa8de2b30c3ae19da5540f4b0954bb32520f5fe3303e0368aac39ff606",
+      "backend_identity": "{\"mamba_backend\": \"lightweight\", \"mamba_implementation\": \"lightweight_state_space\", \"mamba_ssm_version\": null}"
+    },
+    {
+      "variant": "without_refinement_decoder",
+      "status": "completed",
+      "configuration_hash": "7abaf99c86256c29e604ab7ebde051013d5f3a7e95c746eb1825aadfcdbe2ad3",
+      "checkpoint_hash": "e83def556d5f45da753ca2f569092f7fe7dde59686c08958289a5cfe0043e752",
+      "backend_identity": "{\"mamba_backend\": \"lightweight\", \"mamba_implementation\": \"lightweight_state_space\", \"mamba_ssm_version\": null}"
+    }
+  ]
+}

@@ -56,6 +56,42 @@ official Mamba-SSM implementation. Production defaults and experiments using
 `mamba_backend: mamba_ssm` require the separate `.[mamba]` extra and must be
 reported independently.
 
+For the archival CPU environment, install the exact validated versions from
+`requirements-peerj-lock.txt`, then install this repository without resolving
+new dependencies:
+
+```bash
+python -m pip install -r requirements-peerj-lock.txt
+python -m pip install --no-deps -e .
+```
+
+The recorded experiment environment was Python 3.12.13, PyTorch 2.13.0+cpu,
+and Windows 10 build 19045. The lock describes the validated lightweight CPU
+analysis/test environment. It deliberately excludes `mamba-ssm`; installing
+that optional backend creates a different, unvalidated experiment environment.
+
+## Hardware and runtime provenance
+
+| Item | Recorded value |
+| --- | --- |
+| CPU model | **NOT RECORDED** |
+| Physical/logical CPU core allocation | **NOT RECORDED** |
+| RAM | **NOT RECORDED** |
+| Operating system | Windows 10, version/build 10.0.19045, 64-bit Python platform |
+| Python | 3.12.13, MSC v.1944, 64 bit (AMD64) |
+| PyTorch | 2.13.0+cpu |
+| CUDA availability during experiments | **NOT RECORDED**; the saved runtime was a CPU-only PyTorch build |
+| GPU model/status | No GPU was used by the `device: cpu` recipes; installed GPU hardware is **NOT RECORDED** |
+| Backend | `lightweight` / `lightweight_state_space`; `mamba_ssm_version: null` |
+| Evaluation batch size | 16 |
+| Latency batch size | 1 |
+| Latency warm-ups | 10 |
+| Timed latency iterations | 100 |
+| Thread count, CPU affinity, and power state | **NOT RECORDED** |
+
+Latency values are therefore historical measurements for the recorded CPU
+runtime, not portable hardware-independent performance claims.
+
 ## Artifact identity
 
 Before using a saved result, verify:
@@ -86,6 +122,11 @@ results/ablation/final/
 results/final_benchmark/
 results/final_analysis/paper_ready/
 ```
+
+Small publication-critical summaries at these paths are tracked for direct
+table/figure traceability. The dataset and checkpoint payloads remain external
+artifacts. Their required paths, sizes, SHA-256 values, and the future deposit
+layout are specified in `docs/peerj_archival_manifest.md`.
 
 The publication audit records cell/figure provenance in
 `results/final_analysis/paper_ready/source_provenance.csv`. Its

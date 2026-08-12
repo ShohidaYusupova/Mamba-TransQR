@@ -1,0 +1,21 @@
+output_artifact,element,source_artifact,source_fields,transformation,status
+Table 1 / Figure 5,Baseline,results\first_real_qr_restoration\benchmark_summary.csv; results\first_real_qr_restoration\validation_history.csv,"test_psnr,test_ssim,runtime_seconds; validation_history val_psnr,val_ssim",exact values; display rounded to 6 decimals,verified
+Table 1 / Figure 5,Phase 1,results\phase1_pilot\benchmark_summary.csv; results\phase1_pilot\validation_history.csv,"test_psnr,test_ssim,runtime_seconds; validation_history val_psnr,val_ssim",exact values; display rounded to 6 decimals,verified
+Table 1 / Figure 5,Phase 2,results\phase2_pilot\benchmark_summary.csv; results\phase2_pilot\validation_history.csv,"test_psnr,test_ssim,runtime_seconds; validation_history val_psnr,val_ssim",exact values; display rounded to 6 decimals,verified
+Table 1 / Figure 5,Phase 3,results\phase3_pilot\benchmark_summary.csv; results\phase3_pilot\validation_history.csv,"test_psnr,test_ssim,runtime_seconds; validation_history val_psnr,val_ssim",exact values; display rounded to 6 decimals,verified
+Table 1,Baseline/Phase 1/Phase 2 parameter count,results/phase3_pilot/comparison.md,Parameters row,exact integer copied from saved comparison,verified
+Table 2 / Figure 7,Full Model,results/ablation/final/ablation_table.csv,"params,test_psnr,test_ssim,latency_ms,delta_psnr,delta_ssim",exact values; labels normalized; display rounded,verified
+Table 2 / Figure 7,Without Mamba,results/ablation/final/ablation_table.csv,"params,test_psnr,test_ssim,latency_ms,delta_psnr,delta_ssim",exact values; labels normalized; display rounded,verified
+Table 2 / Figure 7,Without QR Structure Loss,results/ablation/final/ablation_table.csv,"params,test_psnr,test_ssim,latency_ms,delta_psnr,delta_ssim",exact values; labels normalized; display rounded,verified
+Table 2 / Figure 7,Without Decode Consistency Loss,results/ablation/final/ablation_table.csv,"params,test_psnr,test_ssim,latency_ms,delta_psnr,delta_ssim",exact values; labels normalized; display rounded,verified
+Table 2 / Figure 7,Without EMA,results/ablation/final/ablation_table.csv,"params,test_psnr,test_ssim,latency_ms,delta_psnr,delta_ssim",exact values; labels normalized; display rounded,verified
+Table 2 / Figure 7,Without Refinement Decoder,results/ablation/final/ablation_table.csv,"params,test_psnr,test_ssim,latency_ms,delta_psnr,delta_ssim",exact values; labels normalized; display rounded,verified
+Table 3,Degraded Input,results/final_benchmark/benchmark_table.csv,"params,psnr,ssim,decode_rate,latency_ms",exact values; missing fields rendered N/A; display rounded,verified
+Table 3,SRCNN,results/final_benchmark/benchmark_table.csv,"params,psnr,ssim,decode_rate,latency_ms",exact values; missing fields rendered N/A; display rounded,verified
+Table 3,ESPCN,results/final_benchmark/benchmark_table.csv,"params,psnr,ssim,decode_rate,latency_ms",exact values; missing fields rendered N/A; display rounded,verified
+Table 3,VDSR,results/final_benchmark/benchmark_table.csv,"params,psnr,ssim,decode_rate,latency_ms",exact values; missing fields rendered N/A; display rounded,verified
+Table 3,EDSR,results/final_benchmark/benchmark_table.csv,"params,psnr,ssim,decode_rate,latency_ms",exact values; missing fields rendered N/A; display rounded,verified
+Table 3,SwinIR,results/final_benchmark/benchmark_table.csv,"params,psnr,ssim,decode_rate,latency_ms",exact values; missing fields rendered N/A; display rounded,verified
+Table 3,Mamba-TransQR,results/final_benchmark/benchmark_table.csv,"params,psnr,ssim,decode_rate,latency_ms",exact values; missing fields rendered N/A; display rounded,verified
+Figure 6,all validation trajectories,"results/{first_real_qr_restoration,phase1_pilot,phase2_pilot,phase3_pilot}/validation_history.csv","epoch,val_psnr,val_ssim",direct line plots; no interpolation or smoothing,verified
+Figure 8,complete figure,"results/final_benchmark/benchmark_figure.{png,pdf}",complete saved benchmark figure,byte-for-byte copy,verified

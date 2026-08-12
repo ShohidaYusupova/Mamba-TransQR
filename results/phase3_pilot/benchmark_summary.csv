@@ -1,0 +1,2 @@
+model,test_psnr,test_ssim,runtime_seconds,parameter_count,inference_latency_ms
+mamba_transqr_lightweight,16.4523534166052,0.9503737294927557,18945.25437890005,1476259,83.92758500413038
