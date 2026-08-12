@@ -12,6 +12,7 @@
 - [PeerJ archival release readiness audit](peerj_release_readiness_audit.md)
 - [PeerJ archival manifest](peerj_archival_manifest.md)
 - [PeerJ final release readiness](peerj_release_readiness_final.md)
+- [PeerJ final reconciliation and readiness v2](peerj_release_readiness_final_v2.md)
 - [Optimization plan](optimization_plan.md)
 
 The reproducibility guide is the entry point for the completed baseline,

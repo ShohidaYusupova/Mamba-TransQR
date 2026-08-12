@@ -15,7 +15,7 @@ the repository root. Large datasets and checkpoints are not stored in Git.
 | Controlled benchmark finalization | `2f06fa15b2049351de8bc393f1fc3303299ccae7` |
 | Without-Mamba audit and pre-release source candidate | `6781bd2899c74c5caaa2179c79cec39c54327bfd` |
 | Pre-release readiness audit | `62e2e5b8a90c73aeee65a5358d66d9053e4858a4` |
-| Final archival release commit | **NOT YET CREATED**; use the commit containing this manifest after all remaining blockers are resolved |
+| Final archival release candidate | `HEAD` containing `docs/peerj_release_readiness_final_v2.md`; record the immutable full commit in the release metadata and final handoff |
 
 ## Backend and protocol identity
 
@@ -53,13 +53,35 @@ regeneration must not be claimed; deposit the verified dataset.
 | Full Phase 3 / full model | `checkpoints/phase3_pilot/best.pt` | 29,799,773 | `a0e1abf2c3241a360dc7f5a66936aa838ad5d170a2c4a2cc44db1b98ee7099d6` | same | Verified; byte-identical to `checkpoints/ablation/full_model/best.pt` |
 | Without Mamba | `checkpoints/ablation/without_mamba/best.pt` | 24,334,055 | `2e172078ae467debafdbe7a7b4d1ab41fe91086d4fb7c55f6237ed70539ff9f6` | same | Verified |
 | Without QRStructureLoss | `checkpoints/ablation/without_qr_structure_loss/best.pt` | 29,799,901 | `f2f45dd5707c52270cf4c79c19167bac943b30a18fc4f5788b9cec25c05bcf99` | same | Verified |
-| Without DecodeConsistencyLoss | `checkpoints/ablation/without_decode_consistency_loss/best.pt` | 29,813,785 | `9bd0d1166ffccbe723d309c7558f4463656d63e9290cc27d8d5db0e8db9e9dcd` | `a9f53d7d466e71b35932fa4fec96c2a497eea019bdf8e283abb4b1d6e1169500` | **MISMATCH - BLOCKER** |
-| Without EMA | `checkpoints/ablation/without_ema/best.pt` | 17,911,196 | `bff08d0f6883d167ab5ca34e6267e014d5001d4da435494332d59e279c0585a6` | `bf3f32fa8de2b30c3ae19da5540f4b0954bb32520f5fe3303e0368aac39ff606` | **MISMATCH - BLOCKER** |
-| Without Refinement Decoder | `checkpoints/ablation/without_refinement_decoder/best.pt` | 29,584,617 | `f5dce71cf3321ace5b4819521bc16141ea537849bd88a3d0592d12ec9a50e679` | `e83def556d5f45da753ca2f569092f7fe7dde59686c08958289a5cfe0043e752` | **MISMATCH - BLOCKER** |
+| Without DecodeConsistencyLoss | `checkpoints/ablation_pre_rerun/without_decode_consistency_loss/best.pt` | 29,799,901 | `a9f53d7d466e71b35932fa4fec96c2a497eea019bdf8e283abb4b1d6e1169500` | same | Reconciled; original evaluated serialization |
+| Without EMA | `checkpoints/ablation_pre_rerun/without_ema/best.pt` | 17,897,377 | `bf3f32fa8de2b30c3ae19da5540f4b0954bb32520f5fe3303e0368aac39ff606` | same | Reconciled; original evaluated serialization |
+| Without Refinement Decoder | `checkpoints/ablation_pre_rerun/without_refinement_decoder/best.pt` | 29,570,733 | `e83def556d5f45da753ca2f569092f7fe7dde59686c08958289a5cfe0043e752` | same | Reconciled; original evaluated serialization |
 
-The three mismatches must be resolved by recovering the exact recorded files
-or by proving, without changing results, which serialization corresponds to
-the reported evaluation. Do not deposit ambiguous replacements.
+### Checkpoint reconciliation
+
+All 369 local `.pt` files were hashed. The three recorded hashes were found
+under `checkpoints/ablation_pre_rerun/`. For each variant, the recorded file
+and current `checkpoints/ablation/.../best.pt` have identical logical hashes
+for every deployable `model` tensor and every `raw_model` tensor, identical
+epoch-30 state/global step/best epoch/validation metrics, and identical model
+architecture and backend. The later current files add `grad_scaler`,
+`early_stopping`, `rng_state`, `resume_identity`, and `resume_events`, and use a
+repository-relative reproduction recipe; serializing that enriched mapping
+changes the whole-file SHA-256 without changing trained weights.
+
+| Variant | Recorded hash source | Current hash | Config hash | Dataset hash / seed | Resumed | Final artifact and reason |
+| --- | --- | --- | --- | --- | --- | --- |
+| Without DecodeConsistencyLoss | final `ablation_raw_results.csv`, `ablation_summary.json`, and `reproducibility.json`; original file found locally | `9bd0d1166ffccbe723d309c7558f4463656d63e9290cc27d8d5db0e8db9e9dcd` | `4fc78dc1acd76309eb4543e77f4c34d03440968e8e4ddb0d337601bfc3321f4c` | `2c47950...45c2f` / 42 | false | Recorded-hash pre-rerun file: it is the exact serialization named by final provenance and has the same trained state as the enriched copy. |
+| Without EMA | same sources; original file found locally | `bff08d0f6883d167ab5ca34e6267e014d5001d4da435494332d59e279c0585a6` | `08b3f1fb1846e80d1ac9a976a80341390f895c63ecc1cb0918bf344d47903933` | `2c47950...45c2f` / 42 | false | Recorded-hash pre-rerun file for the same reason. |
+| Without Refinement Decoder | same sources; original file found locally | `f5dce71cf3321ace5b4819521bc16141ea537849bd88a3d0592d12ec9a50e679` | `7abaf99c86256c29e604ab7ebde051013d5f3a7e95c746eb1825aadfcdbe2ad3` | `2c47950...45c2f` / 42 | false | Recorded-hash pre-rerun file for the same reason. |
+
+All three use the lightweight backend, base experiment commit
+`b8fee1fcbc2da8fa39a78ce4b2a183e0c8bdfdbc`, 30 epochs, 13,140 global
+steps, and the variant architecture recorded in the resolved configuration.
+The test metrics remain those in the final controlled results; checkpoints do
+not contain test metrics and none were inserted or altered. Outcome: category
+**C** at the file-serialization level, with identical trained tensors; the
+recorded original serialization is the unambiguous archival choice.
 
 ## Publication-critical tracked summaries
 
@@ -104,29 +126,26 @@ variation because their inference graphs are unchanged.
 | `docs/figures/figure5_experimental_results.svg` | 245,898 | `ad2c01621c747624a3136741104d8aaff462e8ba16459431e157ff7697660b4a` |
 
 The displayed controlled-ablation PSNR/SSIM values match the table after
-rounding. Clean/damaged/metadata files for the four fixed-test samples are
-present in the dataset. The standalone restored sample PNGs are **NOT FOUND**;
-recover or deterministically regenerate and hash them before deposit.
+rounding. The four clean/degraded/restored triplets and their hashes are now
+tracked under `docs/figures/figure5_samples/`. Restored files were regenerated
+by deterministic CPU inference from the verified Phase 3 EMA checkpoint; the
+sample manifest records inference settings and quantitative correspondence to
+the raster images embedded in the SVG. No image was manually edited.
 
 ## Future Zenodo/supplementary deposit
 
-Prepare, but do not yet deposit, these curated packages:
+The following deterministic ZIPs are staged locally under
+`release/peerj_v1.0.0/` but have not been uploaded. Archive and critical-file
+hashes are in `release/peerj_v1.0.0/SHA256SUMS.txt`; keeping the source ZIP's
+own hash outside the source ZIP avoids a circular self-hash.
 
-1. `mambatransqr-peerj-dataset.zip`: complete verified
-   `datasets/first_real_qr_10k/` (current uncompressed size 163,411,356 bytes),
-   including manifest, summaries, and split statistics.
-2. `mambatransqr-peerj-checkpoints.zip`: exactly the six canonical best
-   checkpoints listed above (current total about 161 MB; omit duplicate full
-   model and all epoch/latest checkpoints). Create only after resolving the
-   three hash mismatches.
-3. `mambatransqr-peerj-results.zip`: compact tracked summaries plus resolved
-   configurations, per-variant training/validation histories, run metadata,
-   final analysis outputs, and the four clean/damaged/restored qualitative
-   triplets. Current candidate compact directories are approximately:
-   `results/phase3_pilot/` 27,966 bytes, `results/ablation/final/` 400,451
-   bytes, `results/final_benchmark/` 312,508 bytes, and
-   `results/final_analysis/paper_ready/` 799,636 bytes, before adding missing
-   restored samples and selected per-variant provenance.
+| Staged bundle | Bytes | SHA-256 |
+| --- | ---: | --- |
+| `source_and_reproducibility/mambatransqr-peerj-source-and-reproducibility.zip` | See `SHA256SUMS.txt` | See `SHA256SUMS.txt` |
+| `dataset_or_dataset_manifest/mambatransqr-peerj-dataset.zip` | 159,957,360 | `87390c58af5aa71dbb128ac7a236b82f1c56ad3f837712fa5b933833df4fecfe` |
+| `checkpoints/mambatransqr-peerj-checkpoints.zip` | 147,608,332 | `fd153768cc3609b18df531ca8ed2067d25666c9e541793aa4ed92effc15ad04d` |
+| `manuscript_results/mambatransqr-peerj-results.zip` | 46,965 | `893afd78146ed4a058e20e52d4de79065ed00d7a5f9667de8ef0ef47f2963295` |
+| `figure_supporting_data/mambatransqr-peerj-figure5-data.zip` | 1,028,150 | `5880c5a79d7f1f8dda99f387931af24c8f726cf1e3d25ca437348a71c3be847c` |
 
 Exclude virtual environments, caches, scratch orchestration files, pre-rerun
 and pilot outputs, redundant epoch/latest checkpoints, machine-named

@@ -1,0 +1,17 @@
+191eebb0dade24e2dafdf2102fb16a13a9fde4274f05abe42b40a30bf795829c  source_and_reproducibility/mambatransqr-peerj-source-and-reproducibility.zip
+87390c58af5aa71dbb128ac7a236b82f1c56ad3f837712fa5b933833df4fecfe  dataset_or_dataset_manifest/mambatransqr-peerj-dataset.zip
+fd153768cc3609b18df531ca8ed2067d25666c9e541793aa4ed92effc15ad04d  checkpoints/mambatransqr-peerj-checkpoints.zip
+893afd78146ed4a058e20e52d4de79065ed00d7a5f9667de8ef0ef47f2963295  manuscript_results/mambatransqr-peerj-results.zip
+5880c5a79d7f1f8dda99f387931af24c8f726cf1e3d25ca437348a71c3be847c  figure_supporting_data/mambatransqr-peerj-figure5-data.zip
+a0e1abf2c3241a360dc7f5a66936aa838ad5d170a2c4a2cc44db1b98ee7099d6  ../../checkpoints/phase3_pilot/best.pt
+a9f53d7d466e71b35932fa4fec96c2a497eea019bdf8e283abb4b1d6e1169500  ../../checkpoints/ablation_pre_rerun/without_decode_consistency_loss/best.pt
+bf3f32fa8de2b30c3ae19da5540f4b0954bb32520f5fe3303e0368aac39ff606  ../../checkpoints/ablation_pre_rerun/without_ema/best.pt
+e83def556d5f45da753ca2f569092f7fe7dde59686c08958289a5cfe0043e752  ../../checkpoints/ablation_pre_rerun/without_refinement_decoder/best.pt
+2e172078ae467debafdbe7a7b4d1ab41fe91086d4fb7c55f6237ed70539ff9f6  ../../checkpoints/ablation/without_mamba/best.pt
+f2f45dd5707c52270cf4c79c19167bac943b30a18fc4f5788b9cec25c05bcf99  ../../checkpoints/ablation/without_qr_structure_loss/best.pt
+2c47950acb452137b3634bb3527cd48f3554b18f3416cd9c8cc7a1422df45c2f  ../../datasets/first_real_qr_10k/dataset_manifest.csv
+fadb5c61b22afa65d82f6c66a99b5b8972ac9646212a237ce238927cc5adeca7  ../../datasets/first_real_qr_10k/split_statistics.json
+eebcd3f75235056e19f6f49f022025b7c0ad72752c220eb1d69300d1b4bf11eb  ../../results/ablation/final/ablation_table.csv
+ccbda56937ce21248c89caca15da19a990a7327a5192ba1d217619eb22af2681  ../../results/final_benchmark/benchmark_table.csv
+d0b641a2c923e450fb34f402843edb4113707cb0e86df100b400911e724da4f1  ../../results/final_analysis/paper_ready/source_provenance.csv
+6f297ecb7a7a0e60d7dce96041b64885b9c6cef86b263996a34d205252ca18fd  ../../docs/figures/figure5_samples/manifest.csv
