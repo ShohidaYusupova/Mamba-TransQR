@@ -1,0 +1,2 @@
+69fac6b6701c7392655f8df24a6059e9528ced1ab9436f92c6525a03cd95e18a  mambatransqr-peerj-v1.0.2-source-and-reproducibility.zip
+b31cd14e34fb89a6c472d2966167ddf346f2d4a97978cd730c7ce73147a916d1  ../../README.md

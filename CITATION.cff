@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use Mamba-TransQR in your research, please cite it using this metadata."
 title: "Mamba-TransQR"
 type: software
-version: 1.0.1
+version: 1.0.2
 license: MIT
 authors:
   - given-names: "Shohida"
@@ -22,5 +22,5 @@ authors:
     affiliation: "Non-state Educational Institution \"Mamun University\""
     orcid: "https://orcid.org/0009-0001-5699-3916"
 repository-code: "https://github.com/ShohidaYusupova/Mamba-TransQR"
-url: "https://github.com/ShohidaYusupova/Mamba-TransQR/releases/tag/v1.0.1"
-abstract: "Documentation-only PeerJ reproducibility update; scientific artifacts and results are unchanged from v1.0.0 (DOI 10.5281/zenodo.21913175)."
+url: "https://github.com/ShohidaYusupova/Mamba-TransQR/releases/tag/v1.0.2"
+abstract: "Final documentation-only PeerJ reproducibility synchronization patch; scientific artifacts and results are unchanged from v1.0.0 (DOI 10.5281/zenodo.21913175). The preceding v1.0.1 documentation release is archived at DOI 10.5281/zenodo.22874149."

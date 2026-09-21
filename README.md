@@ -6,14 +6,20 @@ decoder. This repository contains the source code, configurations, compact
 results, and provenance documentation supporting the PeerJ Computer Science AI
 Application submission.
 
-This README accompanies **v1.0.1**, a documentation-only reproducibility
-update for the PeerJ Computer Science AI Application submission. The trained
-model, dataset lineage, checkpoints, quantitative results, figures, and
-experimental conclusions are unchanged from the frozen scientific release
+This README accompanies **v1.0.2**, the final documentation-only
+reproducibility synchronization patch prepared for the PeerJ Computer Science
+AI Application resubmission. The corresponding public source release is
+[GitHub v1.0.2](https://github.com/ShohidaYusupova/Mamba-TransQR/releases/tag/v1.0.2).
+
+The trained model, dataset lineage, checkpoints, quantitative results, figures,
+and experimental conclusions are unchanged from the frozen scientific release
 **v1.0.0** at commit
 `781bbbd39fbea517f6481e78f837a5e6989d3232`. The unchanged scientific assets are
 [Zenodo DOI 10.5281/zenodo.21913175](https://doi.org/10.5281/zenodo.21913175).
-See [the v1.0.1 release notes](RELEASE_NOTES_v1.0.1.md) for the exact scope.
+The preceding documentation-only reproducibility release, **v1.0.1**, is
+archived at [Zenodo DOI 10.5281/zenodo.22874149](https://zenodo.org/records/22874149).
+Neither v1.0.1 nor v1.0.2 reran the experiments or changed their results. See
+[the v1.0.2 release notes](RELEASE_NOTES_v1.0.2.md) for the exact scope.
 
 ## 1. Description
 
@@ -357,12 +363,12 @@ software/archive, cite:
 > Fakhriddin Bekchanov. *Mamba-TransQR*, version v1.0.0. Zenodo.
 > https://doi.org/10.5281/zenodo.21913175
 
-Version v1.0.1 changes documentation and reproducibility metadata only. Its
-machine-readable metadata are in `CITATION.cff`; a v1.0.1 Zenodo identifier
-must be added only after the new Zenodo version is published. The existing DOI
-identifies the v1.0.0 scientific archive, not v1.0.1 or the PeerJ article. Add
-the final PeerJ article citation only after verified bibliographic metadata and
-DOI are issued.
+Version v1.0.1 changed documentation and reproducibility metadata only and is
+archived at Zenodo DOI `10.5281/zenodo.22874149`. Version v1.0.2 is the final
+documentation/reproducibility synchronization patch for the PeerJ resubmission.
+Neither release changes the v1.0.0 scientific evidence. Machine-readable
+release metadata are provided in `CITATION.cff`. Add the final PeerJ article
+citation only after verified article bibliographic metadata and DOI are issued.
 
 ## 13. License
 

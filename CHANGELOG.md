@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.0.2] - 2026-09-21
+
+### Changed
+
+- Finalized post-publication README wording for the PeerJ Computer Science AI
+  Application resubmission.
+- Synchronized package, citation, and reproducibility version metadata.
+- Documented the published v1.0.1 Zenodo archival record, DOI
+  `10.5281/zenodo.22874149`.
+- Removed obsolete pre-publication wording about adding the v1.0.1 DOI later.
+- Stabilized the README so it does not depend on insertion of a future v1.0.2
+  Zenodo DOI.
+
+### Unchanged
+
+- Scientific experiments, model implementation, dataset lineage, checkpoints,
+  quantitative results, figures, tables, and scientific conclusions.
+
 ## [Unreleased]
 
 ### Added
