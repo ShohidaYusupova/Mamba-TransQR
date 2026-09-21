@@ -1,5 +1,13 @@
 # Experiment reproducibility
 
+## PeerJ documentation patch release
+
+Version v1.0.1 is a documentation-only reproducibility update. Its trained
+model, dataset lineage, checkpoints, quantitative results, figures, and
+experimental conclusions are unchanged from frozen scientific release v1.0.0,
+commit `781bbbd39fbea517f6481e78f837a5e6989d3232`, archived at
+<https://doi.org/10.5281/zenodo.21913175>.
+
 This guide describes how to verify and reconstruct the completed research
 package without confusing generated artifacts with version-controlled source.
 

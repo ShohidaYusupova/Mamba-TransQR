@@ -1,276 +1,390 @@
 # Mamba-TransQR
 
-Mamba-TransQR is a Python toolkit for developing, training, evaluating, and
-deploying Mamba-Transformer models for quality-aware research workflows.
+Mamba-TransQR is a lightweight QR-image restoration system that combines a
+Transformer encoder, a lightweight state-space sequence mixer, and a refinement
+decoder. This repository contains the source code, configurations, compact
+results, and provenance documentation supporting the PeerJ Computer Science AI
+Application submission.
 
-Mamba-TransQR provides an end-to-end, configurable workflow for damaged QR
-image restoration: data preparation, hybrid Mamba-Transformer modeling,
-training, evaluation, and deployable inference.
+This README accompanies **v1.0.1**, a documentation-only reproducibility
+update for the PeerJ Computer Science AI Application submission. The trained
+model, dataset lineage, checkpoints, quantitative results, figures, and
+experimental conclusions are unchanged from the frozen scientific release
+**v1.0.0** at commit
+`781bbbd39fbea517f6481e78f837a5e6989d3232`. The unchanged scientific assets are
+[Zenodo DOI 10.5281/zenodo.21913175](https://doi.org/10.5281/zenodo.21913175).
+See [the v1.0.1 release notes](RELEASE_NOTES_v1.0.1.md) for the exact scope.
 
-The completed research sequence covers the first real baseline, three
-optimization phases, a controlled ablation study, a final benchmark, and a
-publication-package audit. See the
-[reproducibility guide](docs/reproducibility.md) for artifact provenance,
-commands, backend identity, and interpretation limits.
+## 1. Description
 
-The confirmed software author is **Shohida Yusupova**. Citation metadata is in
-[`CITATION.cff`](CITATION.cff); no ORCID is recorded because none was verified
-from repository evidence.
+The project restores synthetically degraded QR images while preserving the
+structural features needed for decoding. Its Mamba-Transformer approach couples
+a Transformer representation with the validated lightweight state-space mixer
+and a refinement decoder. The reported workflow generates paired
+clean/degraded QR images, trains restoration models in staged phases, evaluates
+the selected Phase 3 checkpoint on a fixed test split, and runs controlled
+ablations and latency measurements.
 
-## Requirements
+The manuscript experiments used the repository's
+`lightweight_state_space` backend. The optional official `mamba-ssm` package is
+an alternative implementation and was **not** used to produce the reported
+results.
 
-- Python 3.11 or later
+## 2. Repository Structure
 
-## Installation
+```text
+Mamba-TransQR/
+├── src/mambatransqr/       Python package and canonical model implementation
+├── configs/                Dataset, training, benchmark, and ablation configs
+├── scripts/                Dataset, training, evaluation, and audit entry points
+├── tests/                  Automated unit and integration tests
+├── docs/                   Reproducibility and archival provenance documents
+├── results/                Compact manuscript-supporting results and audits
+├── release/                Archival bundle manifests and checksums
+├── datasets/               Local generated datasets (large content is ignored)
+├── checkpoints/            Local trained weights (large content is ignored)
+├── pyproject.toml           Package metadata and dependency groups
+└── requirements-peerj-lock.txt  Validated PeerJ CPU environment lock
+```
 
-For a development install:
+Physical smartphone/deployment data developed after v1.0.0 are not included in
+this publication release and are not evidence for its reported training or test
+results.
 
-```bash
+## 3. Dataset Information
+
+The manuscript dataset contains **10,000 paired samples**: 7,000 training,
+1,500 validation, and 1,500 test pairs. Each pair consists of a clean 128×128 QR
+image and one synthetically degraded image. Generation uses seed 42 and samples
+QR versions 1, 5, 10, and 20; error-correction levels L, M, Q, and H; and
+alphanumeric, numeric, byte, and URL payloads. The degradation engine applies
+the configured moderate-severity blur, noise, compression, illumination,
+perspective, occlusion, and related transformations.
+
+Payloads are assigned to exactly one split before image generation. The tracked
+the grouped split implementation assigns each generated payload to exactly one
+split before degradation. The split and manifest provenance are documented in
+the archival manifest.
+The authoritative manifest SHA-256 is
+`2c47950acb452137b3634bb3527cd48f3554b18f3416cd9c8cc7a1422df45c2f`.
+
+The complete image dataset is intentionally excluded from Git history. It must
+be obtained from the v1.0.0 archival assets or generated locally. Historical
+versions of `qrcode` and PyYAML used for the original generation run were not
+recorded, so current regeneration is structurally deterministic but is not
+claimed to be byte-identical to the archived dataset. Reviewers should verify
+the downloaded archive against [the archival manifest](docs/peerj_archival_manifest.md)
+and its supplied checksums.
+
+## 4. Code Information
+
+The canonical model is `MambaTransQR` in
+[`src/mambatransqr/models/transqr.py`](src/mambatransqr/models/transqr.py), with
+architecture parameters represented by `ModelConfig`. Supporting package code
+is organized as follows:
+
+- `src/mambatransqr/data/`: dataset readers, paired transforms, and degradation;
+- `src/mambatransqr/models/`: Transformer/state-space model components;
+- `src/mambatransqr/losses/`: reconstruction and QR-aware objectives;
+- `src/mambatransqr/training/`: training loop, scheduling, and checkpoints;
+- `src/mambatransqr/evaluation/`: image-quality metrics and evaluation helpers;
+- `src/mambatransqr/inference/`: image, folder, and video inference CLI;
+- `src/mambatransqr/benchmarks/`: benchmark utilities;
+- `src/mambatransqr/experiments/`: experiment orchestration and provenance.
+
+Dataset generation is implemented by
+[`scripts/generate_qr_dataset.py`](scripts/generate_qr_dataset.py) and
+[`src/mambatransqr/data/dataset_builder.py`](src/mambatransqr/data/dataset_builder.py).
+Training uses [`scripts/train_qr_restoration.py`](scripts/train_qr_restoration.py),
+and final evaluation uses
+[`scripts/run_final_benchmark.py`](scripts/run_final_benchmark.py).
+
+## 5. Requirements
+
+- Python 3.11 or newer (the validated archival environment used Python 3.12.13)
+- PyTorch 2.13.0+cpu for the validated Windows CPU reproduction environment
+- Windows 10 build 19045 for the recorded validation run
+- Sufficient storage for the external dataset, checkpoints, and generated output
+
+The deterministic package list is
+[`requirements-peerj-lock.txt`](requirements-peerj-lock.txt). Core and optional
+dependency groups are declared in [`pyproject.toml`](pyproject.toml). The
+official `mamba-ssm` package is optional, is absent from the validated lock, and
+must not be installed when reproducing the reported lightweight-backend results.
+
+The exact CPU model, RAM capacity, core/thread count, power mode, and GPU model
+were not recorded. CUDA was unavailable in the validated experiment metadata;
+the reported run was CPU-only. See
+[`docs/reproducibility.md`](docs/reproducibility.md) for the complete provenance
+and limitations.
+
+## 6. Installation
+
+For the frozen archival version on Windows PowerShell:
+
+```powershell
+git clone https://github.com/ShohidaYusupova/Mamba-TransQR.git
+cd Mamba-TransQR
+git checkout v1.0.1
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
-python -m pip install -e ".[dev]"
-```
-
-For a standard runtime install use `python -m pip install -e .`. Production
-models default to the official `mamba-ssm` backend; install it with
-`python -m pip install -e ".[mamba]"` on its supported platform. Full setup
-instructions are in [docs/installation.md](docs/installation.md).
-
-## Quick start
-
-```python
-from mambatransqr.models import ModelConfig, build_model
-
-model = build_model(
-    ModelConfig(image_size=256, patch_size=16, mamba_backend="mamba_ssm")
-)
-```
-
-The model accepts normalized `BCHW` image tensors and returns restored tensors
-with the configured output channels.
-
-## Development
-
-Run the CPU-only end-to-end validation with `mambatransqr smoke-test`.
-
-```bash
-ruff check .
-black --check .
-mypy src tests
-pytest
-```
-
-## Dataset usage
-
-Place input QR images in split directories (for example,
-`data/train`, `data/validation`, and `data/test`). Image files are discovered
-recursively. For paired restoration data, provide a matching `target_root`;
-each target must have the same relative path as its source image.
-
-```python
-from mambatransqr.data import QRDataModule, QRDegradationEngine
-from mambatransqr.data.transforms import Compose, Resize, ToTensor
-
-train_transform = Compose([Resize((256, 256)), ToTensor()])
-data = QRDataModule(
-    train_dir="data/train",
-    validation_dir="data/validation",
-    test_dir="data/test",
-    batch_size=32,
-    train_transform=train_transform,
-    evaluation_transform=train_transform,
-)
-data.setup()
-batch = next(iter(data.train_dataloader()))
-
-# Module-aware QR degradation can be used before the tensor transform.
-degrader = QRDegradationEngine(module_count=21, quiet_zone_modules=4, seed=7)
-damaged_image = degrader(your_pil_image)
-```
-
-See [configs/dataset.yaml](configs/dataset.yaml) and
-[configs/augmentation.yaml](configs/augmentation.yaml) for reproducible
-configuration examples.
-
-## Synthetic QR dataset generation
-
-Install `python -m pip install -e ".[qr-generation]"`, then generate paired
-clean/damaged PNG data, metadata, manifests, and leakage-safe splits:
-
-```bash
-mambatransqr generate-dataset --config configs/dataset_generation.yaml --output datasets/synthetic_qr
-```
-
-The generator supports QR versions 1--40, L/M/Q/H correction, numeric,
-alphanumeric, byte, and URL payloads. Each payload is assigned to exactly one
-train/validation/test split, preventing payload leakage across severity variants.
-
-## Training
-
-For QR restoration, use `configs/train_qr_restoration.yaml` with the
-multi-scale QR objective (structure and differentiable decode-confidence
-surrogates): `mambatransqr train-qr --config configs/train_qr_restoration.yaml`.
-
-Build the model and use the trainer with a paired image loader that yields
-`{"image": tensor, "target": tensor}` batches. Checkpoints are written after
-every epoch as `latest.pt`, and the best monitored validation result is saved as
-`best.pt`.
-
-```python
-import torch
-
-from mambatransqr.models import ModelConfig, build_model
-from mambatransqr.training import (
-    CSVLogger,
-    LossManager,
-    OptimizerFactory,
-    Trainer,
-    TrainerConfig,
-)
-
-model = build_model(
-    ModelConfig(image_size=256, patch_size=16, mamba_backend="mamba_ssm")
-)
-optimizer = OptimizerFactory.create(model.parameters())
-trainer = Trainer(
-    model,
-    optimizer,
-    LossManager({"mse": torch.nn.MSELoss()}),
-    TrainerConfig(epochs=100, checkpoint_dir="checkpoints"),
-    loggers=[CSVLogger("runs/metrics.csv")],
-)
-history = trainer.fit(train_loader, validation_loader)
-
-# Resume from a prior checkpoint.
-trainer.fit(train_loader, validation_loader, resume_from="checkpoints/latest.pt")
-```
-
-Use [configs/training.yaml](configs/training.yaml) as a starting configuration.
-See [docs/training.md](docs/training.md) for the complete guide.
-
-## Evaluation
-
-Run reproducible, measured benchmark recipes with `mambatransqr benchmark --config configs/benchmark.yaml`.
-
-Evaluate paired predictions with PSNR, SSIM, MSE, and MAE, then write portable
-reports. Optional QR decoding supports ZBar (`pyzbar`) and ZXing
-(`zxing-cpp`) when installed.
-
-```python
-from mambatransqr.evaluation import Evaluator, MetricsManager, ReportGenerator
-
-evaluator = Evaluator(model, MetricsManager(("psnr", "ssim", "mse", "mae")))
-metrics = evaluator.evaluate(test_loader)
-ReportGenerator.evaluation_json(metrics, "reports/evaluation.json")
-```
-
-For inference performance, use `BenchmarkRunner(model).run(example_batch)`;
-it reports throughput/FPS, inference latency, and CPU/GPU memory. See
-[configs/evaluation.yaml](configs/evaluation.yaml) for all report settings.
-See [docs/evaluation.md](docs/evaluation.md) for reports and benchmarking.
-
-## Inference and export
-
-Run a checkpoint over one image, a folder, or video frames. Image results save
-the restored image plus JSON and CSV reports. CUDA AMP is enabled automatically
-when available.
-
-```bash
-mambatransqr predict input.png outputs/ --checkpoint checkpoints/best.pt
-mambatransqr predict-folder images/ outputs/ --checkpoint checkpoints/best.pt
-mambatransqr predict-video input.mp4 outputs/restored.mp4 --checkpoint checkpoints/best.pt
-mambatransqr export exports/model.pt --checkpoint checkpoints/best.pt --format torchscript
-mambatransqr export exports/model.onnx --checkpoint checkpoints/best.pt --format onnx
-```
-
-For Python use, instantiate `Predictor` with a `ModelConfig` and pass it to
-`InferencePipeline`. TorchScript and ONNX exports validate their generated
-artifacts; ONNX supports dynamic batch axes by default. See
-[configs/inference.yaml](configs/inference.yaml) for deployment settings.
-See [docs/inference.md](docs/inference.md) for the full inference guide.
-
-## Architecture
-
-The production model combines the official Mamba selective SSM (`mamba_ssm`)
-with Transformer self-attention in hybrid fusion blocks. A distinctly named
-`LightweightStateSpaceBlock` remains available only as a non-official,
-Mamba-inspired compatibility backend for CPU smoke tests. Checkpoints and
-reports record `mamba_backend`, `mamba_implementation`, and
-`mamba_ssm_version`. See
-[docs/architecture.md](docs/architecture.md) for details.
-
-## Completed experiment artifacts
-
-Generated datasets, checkpoints, logs, and results are intentionally ignored by
-Git. In a workspace containing the completed artifacts, the principal outputs
-are:
-
-- `results/first_real_qr_restoration/`: baseline histories and test metrics;
-- `results/phase1_pilot/`, `phase2_pilot/`, and `phase3_pilot/`: controlled
-  optimization results;
-- `results/ablation/final/`: completed 30-epoch ablation table and figures;
-- `results/final_benchmark/`: final fixed-protocol benchmark;
-- `results/final_analysis/paper_ready/`: audited tables, figures, provenance,
-  corrections log, and Results and Discussion text.
-
-The completed Phase 3 and ablation experiments used the non-official
-`lightweight` state-space backend. They must not be described as measurements
-of the official Mamba-SSM implementation. Missing compatible CNN/Transformer
-benchmark checkpoints remain `N/A`; they were not estimated or substituted.
-
-## PeerJ reproducibility
-
-The archival package is defined by the
-[PeerJ archival manifest](docs/peerj_archival_manifest.md). Large datasets and
-checkpoints are intentionally excluded from Git history and will be supplied
-as versioned archival-release/Zenodo supplementary assets. After restoring
-that bundle at the repository-relative paths recorded in the manifest:
-
-```bash
 python -m pip install -r requirements-peerj-lock.txt
 python -m pip install --no-deps -e .
+python -c "import mambatransqr; print(mambatransqr.__version__)"
+mambatransqr --help
+```
+
+The `--no-deps` editable install preserves the exact versions installed from
+the lock file. For development rather than archival reproduction, install the
+relevant optional groups, for example:
+
+```powershell
+python -m pip install -e ".[dev,benchmark,qr-training,qr-generation]"
+```
+
+Do not install `.[mamba]` for the reported experiments.
+
+## 7. Usage Instructions
+
+Run all commands from the repository root after activating the environment.
+
+### 7.1 Generate/Reproduce the Dataset
+
+```powershell
 python scripts/generate_qr_dataset.py --config configs/first_real_qr_10k_dataset.yaml --output datasets/first_real_qr_10k
-python scripts/train_qr_restoration.py --config configs/phase3_pilot.yaml
-python scripts/run_phase4_ablation.py --mode train-remaining --resume never
-python scripts/finalize_ablation_study.py
+```
+
+Input: [`configs/first_real_qr_10k_dataset.yaml`](configs/first_real_qr_10k_dataset.yaml).
+Output: `datasets/first_real_qr_10k/`, containing
+`train/`, `validation/`, and `test/` directories with `clean/`,
+`damaged/moderate/`, and `metadata/`, plus `dataset_manifest.csv`,
+`dataset_summary.json`, and `split_statistics.json`.
+
+Verify the authoritative manifest after restoring the archived dataset:
+
+```powershell
+(Get-FileHash -Algorithm SHA256 datasets/first_real_qr_10k/dataset_manifest.csv).Hash.ToLower()
+```
+
+The expected value is
+`2c47950acb452137b3634bb3527cd48f3554b18f3416cd9c8cc7a1422df45c2f`.
+The generator also writes `dataset_summary.json` and `split_statistics.json`
+for checking the 7,000/1,500/1,500 split counts.
+
+### 7.2 Train the Model
+
+The staged configs are
+[`configs/first_real_qr_restoration.yaml`](configs/first_real_qr_restoration.yaml),
+[`configs/phase1_pilot.yaml`](configs/phase1_pilot.yaml),
+[`configs/phase2_pilot.yaml`](configs/phase2_pilot.yaml), and
+[`configs/phase3_pilot.yaml`](configs/phase3_pilot.yaml). The final Phase 3 run is:
+
+```powershell
+python scripts/train_qr_restoration.py --config configs/phase3_pilot.yaml --resume never
+```
+
+Input: the generated dataset and the Phase 3 YAML. Output:
+`checkpoints/phase3_pilot/` (including `best.pt`) and
+`results/phase3_pilot/` (history, metrics, and run metadata). Phase 3 uses seed
+42, batch size 16, AdamW, warm-up plus cosine decay, EMA, and at most 30 epochs.
+Training is computationally expensive and is not required merely to validate
+the archived result artifacts.
+
+### 7.3 Evaluate a Checkpoint
+
+Place the archived Phase 3 checkpoint at
+`checkpoints/phase3_pilot/best.pt`, then run:
+
+```powershell
 python scripts/run_final_benchmark.py
+```
+
+The command reads
+[`configs/final_benchmark.yaml`](configs/final_benchmark.yaml), evaluates the
+fixed test split, and writes metrics and latency outputs beneath
+`results/final_benchmark/`. Its latency protocol uses batch size 1, 10 warm-up
+iterations, and 100 timed iterations. External comparison models are not
+included; unavailable external baselines remain marked N/A.
+
+The generic `mambatransqr benchmark` command displays a benchmark recipe; it is
+not the measured Phase 3 evaluation entry point.
+
+### 7.4 Run Inference
+
+Single-image inference with the publication configuration uses the existing
+Python API because the v1.0.0 command-line wrapper does not reconstruct a model
+from a YAML recipe:
+
+```powershell
+python -c "from pathlib import Path; import yaml; from mambatransqr.inference import Predictor; from mambatransqr.models import ModelConfig; r=yaml.safe_load(Path('configs/phase3_pilot.yaml').read_text()); p=Predictor(config=ModelConfig(**r['model']), checkpoint='checkpoints/phase3_pilot/best.pt', device='cpu', mixed_precision=False); image,_=p.predict_path('input.png'); Path('outputs').mkdir(exist_ok=True); image.save('outputs/restored.png')"
+```
+
+Input is `input.png`; output is `outputs/restored.png`. The generic
+`mambatransqr predict` CLI remains available for the package's default
+architecture, but it must not be used with the Phase 3 checkpoint because that
+checkpoint requires the exact YAML model mapping above.
+
+### 7.5 Run Ablation Experiments
+
+The frozen source can rebuild the tracked ablation report without retraining:
+
+```powershell
+python scripts/run_phase4_ablation.py --mode report
+python scripts/finalize_ablation_study.py
 python scripts/prepare_final_analysis.py
 ```
 
-These commands are destructive to same-named output paths; run them only in a
-new reproduction workspace. Dataset generation and training are not required when verifying the deposited
-dataset and checkpoints: verify their SHA-256 values from the manifest, then
-run only the finalization/benchmark commands. The controlled study is a
-single-seed, 30-epoch, one-factor-at-a-time ablation. Expected compact outputs
-include `results/phase3_pilot/benchmark_summary.csv`,
-`results/ablation/final/ablation_table.csv`,
-`results/final_benchmark/benchmark_table.csv`, and the publication tables and
-figures under `results/final_analysis/paper_ready/`.
+These commands consolidate the retained controlled results and publication
+analysis under `results/ablation/` and `results/final_analysis/`. The frozen
+`configs/phase4_ablation.yaml` records a mixed historical 30-epoch and
+15-epoch pilot/resume workflow; it is not a clean one-command reproduction of
+all six final 30-epoch runs. The authoritative six-row results, configuration
+hashes, checkpoint hashes, and this limitation are retained in the archival
+manifest. Full retraining is computationally expensive and requires resolving
+one complete Phase 3-derived YAML per variant from that provenance.
 
-The reported CPU experiments set `mamba_backend: lightweight`, which selects
-the repository's `LightweightStateSpaceBlock`. This is not the optional
-official `mamba-ssm` implementation, and the archived measurements do not
-claim reproducibility for that backend. See
-[the reproducibility guide](docs/reproducibility.md) for hardware provenance,
-verification commands, and known archival limitations.
+### 7.6 Run Tests
 
-## Project layout
-
-```text
-src/mambatransqr/  Package source code
-tests/              Automated tests
-docs/               Documentation sources
-configs/            Reproducible experiment configuration
-examples/           Runnable examples
-scripts/            Developer and operational scripts
-notebooks/          Exploratory notebooks
-benchmarks/         Performance benchmarks
+```powershell
+python -m pytest -q
+python -m ruff check src tests scripts
+python -m black --check src tests scripts
+python -m mypy src tests
 ```
 
-## Contributing
+The first command runs the automated suite. The remaining commands check lint,
+formatting, and static typing; they do not retrain models.
 
-See [CONTRIBUTING.md](CONTRIBUTING.md). Please also follow the
-[Code of Conduct](CODE_OF_CONDUCT.md) and review our [Security Policy](SECURITY.md).
+## 8. Reproducing the Paper Results
 
-## License
+For artifact validation without retraining:
 
-Distributed under the [MIT License](LICENSE).
+1. Check out tag `v1.0.1` and install the locked environment as in Section 6.
+2. Obtain the dataset and checkpoint archival assets associated with the Zenodo
+   record; verify them against
+   [`docs/peerj_archival_manifest.md`](docs/peerj_archival_manifest.md) and
+   `release/peerj_v1.0.0/SHA256SUMS.txt`.
+3. Run the dataset verifier and split audit from Section 7.1.
+4. Run `python scripts/run_final_benchmark.py` to evaluate the archived Phase 3
+   checkpoint on the fixed test split.
+5. Compare the generated output with the compact tracked evidence in
+   `results/final_benchmark/`, `results/final_analysis/`, and
+   `results/ablation_peerj_30e/`.
+
+For full reproduction, first generate or retrieve the dataset, run each staged
+training configuration, run the controlled ablations, and then execute the final
+benchmark and analysis commands in Section 7. Dataset generation is reproducible
+at the documented structural/configuration level; byte identity with the
+historical dataset is not asserted because two generator dependency versions
+were not recorded.
+
+The selected Phase 3 model has 1,476,259 trainable parameters. The authoritative
+reported test metrics, ablation table, latency measurements, checkpoint hashes,
+and Figure 4/Figure 5 data are enumerated in the
+[archival manifest](docs/peerj_archival_manifest.md), which should take precedence
+over rounded narrative summaries.
+
+## 9. Methodology
+
+The workflow is:
+
+1. Generate QR payloads and clean symbols using the fixed dataset configuration.
+2. Assign payload groups to train, validation, or test with seed 42 so identical
+   QR content cannot cross splits.
+3. Apply one deterministic, metadata-recorded synthetic degradation to each
+   clean symbol to form paired restoration samples.
+4. Load and transform the paired images into normalized model tensors.
+5. Train the baseline and staged Phase 1–3 models using the same dataset lineage.
+6. Optimize reconstruction, SSIM, edge, QR-structure, and decode-consistency
+   objectives with AdamW and the configured schedule.
+7. Select the Phase 3 checkpoint by validation PSNR, preserving checkpoint,
+   dataset-manifest, configuration, seed, backend, and Git provenance.
+8. Restore the fixed test images, calculate image-quality metrics, assess QR
+   decoding where supported, and measure CPU latency under the documented
+   warm-up/timing protocol.
+9. Run controlled single-component ablations from the same inherited Phase 3
+   configuration and prepare the tracked manuscript tables and figures.
+
+## 10. Output Files and Results
+
+| Output | Location | Purpose |
+|---|---|---|
+| Dataset manifest and split metadata | `datasets/first_real_qr_10k/` | Pair paths, parameters, hashes, and split counts |
+| Phase 3 checkpoints | `checkpoints/phase3_pilot/` | Best/latest weights and checkpoint provenance |
+| Training history and logs | `results/phase3_pilot/` | CSV histories used by Figure 4 and `tensorboard/` event logs |
+| Final benchmark | `results/final_benchmark/` | Fixed-test metrics and latency protocol/results |
+| Controlled ablations | `results/ablation_peerj_30e/` | Six-variant compact result summaries |
+| Final analysis | `results/final_analysis/` | Manuscript tables and Figure 5 quantitative data |
+| Figure support | `docs/figures/` | Publication exports and qualitative sample evidence |
+| Release checksums | `release/peerj_v1.0.0/SHA256SUMS.txt` | Integrity verification for staged artifacts |
+
+Large datasets and checkpoints are distributed through archival release assets,
+not Git history. Small publication-critical JSON, CSV, Markdown, and figure
+supporting files remain tracked for inspection.
+
+## 11. Reproducibility Notes
+
+- Frozen publication software: tag `v1.0.0`, commit
+  `781bbbd39fbea517f6481e78f837a5e6989d3232`.
+- Validated backend: `lightweight_state_space`; official `mamba-ssm` results are
+  not claimed.
+- Main seed: 42. The dataset manifest and configuration hashes are recorded in
+  the archival manifest and checkpoint metadata.
+- Validated environment: Windows 10 build 19045, Python 3.12.13, PyTorch
+  2.13.0+cpu, CUDA unavailable.
+- Hardware fields absent from experiment evidence are explicitly marked
+  **NOT RECORDED** in the reproducibility documentation rather than inferred.
+- Large assets must be checksum-verified after download. Git alone does not
+  contain the complete dataset or trained checkpoints.
+- The historical dataset cannot be regenerated byte-for-byte with a verified
+  claim because its exact `qrcode` and PyYAML versions were not recorded.
+- Physical smartphone/deployment data added after v1.0.0 are outside the frozen
+  manuscript experiment lineage.
+
+See [`docs/reproducibility.md`](docs/reproducibility.md),
+[`docs/peerj_archival_manifest.md`](docs/peerj_archival_manifest.md), and
+[`docs/peerj_release_readiness_final_v2.md`](docs/peerj_release_readiness_final_v2.md)
+for detailed provenance and known limitations.
+
+## 12. Citation and References
+
+Machine-readable citation metadata are provided in
+[`CITATION.cff`](CITATION.cff). For the unchanged scientific
+software/archive, cite:
+
+> Shohida Yusupova, Otabek Khujaev, Sardorbek Davletboyev, and
+> Fakhriddin Bekchanov. *Mamba-TransQR*, version v1.0.0. Zenodo.
+> https://doi.org/10.5281/zenodo.21913175
+
+Version v1.0.1 changes documentation and reproducibility metadata only. Its
+machine-readable metadata are in `CITATION.cff`; a v1.0.1 Zenodo identifier
+must be added only after the new Zenodo version is published. The existing DOI
+identifies the v1.0.0 scientific archive, not v1.0.1 or the PeerJ article. Add
+the final PeerJ article citation only after verified bibliographic metadata and
+DOI are issued.
+
+## 13. License
+
+The source code and associated repository documentation are released under the
+MIT License. See [`LICENSE`](LICENSE). The synthetic dataset and
+checkpoints/model weights have no separately documented artifact license; this
+release does not invent or assign one. Zenodo v1.0.0's historical CC-BY-4.0
+record-level metadata does not replace the MIT software license and is not
+presented as an artifact-specific license for the dataset or checkpoints.
+
+## 14. Contributing
+
+Contribution instructions are in [`CONTRIBUTING.md`](CONTRIBUTING.md). Please
+open an issue before substantial work, keep changes focused, add tests where
+appropriate, and run the quality checks in Section 7.6. Do not commit private
+data, generated datasets, large checkpoints, or secrets.
+
+## 15. Contact
+
+- Maintainer: Shohida Yusupova
+- Email: gratifikus@gmail.com
+- Issues: <https://github.com/ShohidaYusupova/Mamba-TransQR/issues>
+
+For reproducibility questions, include the Git commit, configuration path,
+dataset-manifest hash, checkpoint hash, backend, and command used.

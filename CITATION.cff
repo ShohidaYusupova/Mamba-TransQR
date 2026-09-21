@@ -2,9 +2,25 @@ cff-version: 1.2.0
 message: "If you use Mamba-TransQR in your research, please cite it using this metadata."
 title: "Mamba-TransQR"
 type: software
-version: 1.0.0
+version: 1.0.1
 license: MIT
 authors:
   - given-names: "Shohida"
     family-names: "Yusupova"
+    affiliation: "Urgench State University named after Abu Rayhan Biruni"
+    orcid: "https://orcid.org/0000-0003-1936-2653"
+  - given-names: "Otabek"
+    family-names: "Khujaev"
+    affiliation: "Urgench State University named after Abu Rayhan Biruni"
+    orcid: "https://orcid.org/0000-0002-9850-6303"
+  - given-names: "Sardorbek"
+    family-names: "Davletboyev"
+    affiliation: "Urgench State University named after Abu Rayhan Biruni"
+    orcid: "https://orcid.org/0009-0000-0235-3289"
+  - given-names: "Fakhriddin"
+    family-names: "Bekchanov"
+    affiliation: "Non-state Educational Institution \"Mamun University\""
+    orcid: "https://orcid.org/0009-0001-5699-3916"
 repository-code: "https://github.com/ShohidaYusupova/Mamba-TransQR"
+url: "https://github.com/ShohidaYusupova/Mamba-TransQR/releases/tag/v1.0.1"
+abstract: "Documentation-only PeerJ reproducibility update; scientific artifacts and results are unchanged from v1.0.0 (DOI 10.5281/zenodo.21913175)."

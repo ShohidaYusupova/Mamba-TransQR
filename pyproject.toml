@@ -4,12 +4,17 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mambatransqr"
-version = "1.0.0"
+version = "1.0.1"
 description = "A production-ready research toolkit for Mamba-TransQR models."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { file = "LICENSE" }
-authors = [{ name = "Shohida Yusupova", email = "gratifikus@gmail.com" }]
+authors = [
+  { name = "Shohida Yusupova", email = "gratifikus@gmail.com" },
+  { name = "Otabek Khujaev" },
+  { name = "Sardorbek Davletboyev" },
+  { name = "Fakhriddin Bekchanov" },
+]
 keywords = ["deep-learning", "mamba", "transformers", "image-quality", "research"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -56,6 +61,7 @@ all = [
 Homepage = "https://github.com/ShohidaYusupova/Mamba-TransQR"
 Repository = "https://github.com/ShohidaYusupova/Mamba-TransQR"
 Issues = "https://github.com/ShohidaYusupova/Mamba-TransQR/issues"
+Archive = "https://doi.org/10.5281/zenodo.21913175"
 
 [project.scripts]
 mambatransqr = "mambatransqr.inference.cli:main"

@@ -4,6 +4,14 @@ This manifest defines the source and external artifact package supporting the
 PeerJ Computer Science manuscript. Hashes are SHA-256. Paths are relative to
 the repository root. Large datasets and checkpoints are not stored in Git.
 
+- Repository: <https://github.com/ShohidaYusupova/Mamba-TransQR>
+- Frozen publication tag: `v1.0.0`
+- Frozen publication commit: `781bbbd39fbea517f6481e78f837a5e6989d3232`
+- Zenodo DOI: <https://doi.org/10.5281/zenodo.21913175>
+
+Later commits, including mobile deployment and validation work, are outside the
+frozen PeerJ publication release.
+
 ## Source identity
 
 | Purpose | Commit |
@@ -15,7 +23,7 @@ the repository root. Large datasets and checkpoints are not stored in Git.
 | Controlled benchmark finalization | `2f06fa15b2049351de8bc393f1fc3303299ccae7` |
 | Without-Mamba audit and pre-release source candidate | `6781bd2899c74c5caaa2179c79cec39c54327bfd` |
 | Pre-release readiness audit | `62e2e5b8a90c73aeee65a5358d66d9053e4858a4` |
-| Final archival release candidate | `HEAD` containing `docs/peerj_release_readiness_final_v2.md`; record the immutable full commit in the release metadata and final handoff |
+| Frozen PeerJ v1.0.0 publication release | `781bbbd39fbea517f6481e78f837a5e6989d3232` |
 
 ## Backend and protocol identity
 
@@ -132,12 +140,15 @@ by deterministic CPU inference from the verified Phase 3 EMA checkpoint; the
 sample manifest records inference settings and quantitative correspondence to
 the raster images embedded in the SVG. No image was manually edited.
 
-## Future Zenodo/supplementary deposit
+## Zenodo/supplementary archival components
 
-The following deterministic ZIPs are staged locally under
-`release/peerj_v1.0.0/` but have not been uploaded. Archive and critical-file
-hashes are in `release/peerj_v1.0.0/SHA256SUMS.txt`; keeping the source ZIP's
-own hash outside the source ZIP avoids a circular self-hash.
+The following deterministic ZIPs were staged locally under
+`release/peerj_v1.0.0/`. Archive and critical-file hashes are in
+`release/peerj_v1.0.0/SHA256SUMS.txt`; keeping the source ZIP's own hash outside
+the source ZIP avoids a circular self-hash. Repository evidence establishes
+the DOI but does not independently enumerate the files currently deposited in
+its Zenodo record. Each component must therefore be checked against
+<https://doi.org/10.5281/zenodo.21913175> before submission.
 
 | Staged bundle | Bytes | SHA-256 |
 | --- | ---: | --- |
